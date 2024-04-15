@@ -5,4 +5,7 @@ public interface ShiftDto {
     String getStartDate();
     String getEndDate();
     String getNurseId();
+    String getNurseFirstName();
+    String getNurseLastName();
+
 }

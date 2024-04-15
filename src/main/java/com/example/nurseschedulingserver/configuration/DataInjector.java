@@ -4,19 +4,19 @@ import com.example.nurseschedulingserver.dto.auth.AuthProjection;
 import com.example.nurseschedulingserver.entity.department.Department;
 import com.example.nurseschedulingserver.entity.nurse.Nurse;
 import com.example.nurseschedulingserver.entity.offday.OffDay;
+import com.example.nurseschedulingserver.entity.shift.Shift;
 import com.example.nurseschedulingserver.enums.OffDayRequestStatus;
 import com.example.nurseschedulingserver.enums.Role;
 import com.example.nurseschedulingserver.repository.DepartmentRepository;
 import com.example.nurseschedulingserver.repository.NurseRepository;
 import com.example.nurseschedulingserver.repository.OffDayRepository;
+import com.example.nurseschedulingserver.repository.ShiftRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 @Configuration
 @RequiredArgsConstructor
@@ -25,13 +25,14 @@ public class DataInjector implements CommandLineRunner {
     private final NurseRepository nurseRepository;
     private final OffDayRepository offDayRepository;
     private final PasswordEncoder passwordEncoder;
-
+    private final ShiftRepository shiftRepository;
 
     @Override
     public void run(String... args) {
         injectDepartments();
         injectNurse();
         injectOffDays();
+        injectShifts();
     }
 
     public void injectDepartments() {
@@ -131,5 +132,53 @@ public class DataInjector implements CommandLineRunner {
             offDays.add(offDay);
         }
         offDayRepository.saveAll(offDays);
+    }
+
+    public void injectShifts(){
+        Calendar calendar = Calendar.getInstance();
+        List<Shift> shifts = shiftRepository.findAll();
+        Shift shift1 = new Shift();
+        shift1.setNurseId(nurseRepository.findNurseByTcKimlikNo("37012561724").orElseThrow().getId());
+        calendar.set(2024, Calendar.MAY, 8, 8, 0, 0);
+        shift1.setStartDate(calendar.getTime());
+        calendar.set(2024, Calendar.MAY, 8, 16, 0, 0);
+        shift1.setEndDate(calendar.getTime());
+        shifts.add(shift1);
+
+        Shift shift2 = new Shift();
+        shift2.setNurseId(nurseRepository.findNurseByTcKimlikNo("12345678901").orElseThrow().getId());
+        calendar.set(2024, Calendar.MAY, 8, 16, 0, 0);
+        shift2.setStartDate(calendar.getTime());
+        calendar.set(2024, Calendar.MAY, 8, 24, 0, 0);
+        shift2.setEndDate(calendar.getTime());
+
+        shifts.add(shift2);
+
+        Shift shift3 = new Shift();
+        shift3.setNurseId(nurseRepository.findNurseByTcKimlikNo("12345678902").orElseThrow().getId());
+        calendar.set(2024, Calendar.MAY, 9, 0, 0, 0);
+        shift3.setStartDate(calendar.getTime());
+        calendar.set(2024, Calendar.MAY, 9, 8, 0, 0);
+        shift3.setEndDate(calendar.getTime());
+        shifts.add(shift3);
+
+        Shift shift4 = new Shift();
+        shift4.setNurseId(nurseRepository.findNurseByTcKimlikNo("37012561724").orElseThrow().getId());
+        calendar.set(2024, Calendar.MAY, 9, 8, 0, 0);
+        shift4.setStartDate(calendar.getTime());
+        calendar.set(2024, Calendar.MAY, 9, 16, 0, 0);
+        shift4.setEndDate(calendar.getTime());
+        shifts.add(shift4);
+
+        Shift shift5 = new Shift();
+        shift5.setNurseId(nurseRepository.findNurseByTcKimlikNo("12345678901").orElseThrow().getId());
+        calendar.set(2024, Calendar.MAY, 9, 16, 0, 0);
+        shift5.setStartDate(calendar.getTime());
+        calendar.set(2024, Calendar.MAY, 9, 24, 0, 0);
+        shift5.setEndDate(calendar.getTime());
+        shifts.add(shift5);
+
+        shiftRepository.saveAll(shifts);
+
     }
 }

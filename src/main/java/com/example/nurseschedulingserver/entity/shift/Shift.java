@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.UuidGenerator;
 
+import java.util.Date;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -20,8 +22,8 @@ public class Shift {
     @Id
     @UuidGenerator
     private String id;
-    private String startDate;
-    private String endDate;
+    private Date startDate;
+    private Date endDate;
     private String nurseId;
 
 }
