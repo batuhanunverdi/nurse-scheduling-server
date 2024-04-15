@@ -17,8 +17,8 @@ public interface ShiftRepository extends JpaRepository<Shift, String> {
                     "INNER JOIN nurses " +
                     "ON shifts.nurse_id = nurses.id " +
                     "WHERE shifts.nurse_id = ?1 " +
-                    "AND EXTRACT(MONTH FROM shifts.start_date) = ?2 " +
-                    "AND EXTRACT(YEAR FROM shifts.start_date) = ?3 "
+                    "AND EXTRACT(MONTH FROM shifts.start_date) = CAST(?2 AS INTEGER) " +
+                    "AND EXTRACT(YEAR FROM shifts.start_date) = CAST(?3 AS INTEGER)"
     )
     List<ShiftDto> findShiftsByNurseId(String nurseId, String month, String year);
 

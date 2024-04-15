@@ -10,10 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -24,6 +21,7 @@ import java.util.List;
 public class NurseController {
     private final NurseService nurseService;
     private final ShiftService shiftService;
+
     @PreAuthorize("hasAuthority('CHARGE')")
     @GetMapping
     public ResponseEntity<Page<NurseDto>> getNurses(Pageable pageable) {
@@ -47,7 +45,10 @@ public class NurseController {
     }
 
     @GetMapping("/{id}/shifts")
-    public ResponseEntity<List<ShiftDto>> getShiftsByNurseId(@PathVariable(value = "id") String id, String month, String year) {
+    public ResponseEntity<List<ShiftDto>> getShiftsByNurseId(
+            @PathVariable(value = "id") String id,
+            @RequestParam(value = "month") String month,
+            @RequestParam(value = "year") String year) {
         try {
             return new ResponseEntity<>(shiftService.getShiftsByNurseId(id, month, year), HttpStatus.OK);
         } catch (Exception e) {
