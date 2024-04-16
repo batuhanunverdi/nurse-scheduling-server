@@ -24,9 +24,9 @@ public class NurseController {
 
     @PreAuthorize("hasAuthority('CHARGE')")
     @GetMapping
-    public ResponseEntity<Page<NurseDto>> getNurses(Pageable pageable) {
+    public ResponseEntity<Page<NurseDto>> getNurses(@RequestParam(value = "department") String department, Pageable pageable) {
         try {
-            return new ResponseEntity<>(nurseService.getNurses(pageable), HttpStatus.OK);
+            return new ResponseEntity<>(nurseService.getNurses(department,pageable), HttpStatus.OK);
         } catch (Exception e) {
             e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);

@@ -52,8 +52,8 @@ public class NurseServiceImpl implements NurseService {
 
 
     @Override
-    public Page<NurseDto> getNurses(Pageable pageable) {
-        return nurseRepository.findAllNurses(pageable);
+    public Page<NurseDto> getNurses(String department,Pageable pageable) {
+        return nurseRepository.findAllNursesByDepartment(department,pageable);
     }
 
     @Override

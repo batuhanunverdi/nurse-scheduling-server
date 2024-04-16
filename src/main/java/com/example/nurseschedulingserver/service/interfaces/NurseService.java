@@ -9,7 +9,7 @@ import org.springframework.data.domain.Pageable;
 public interface NurseService {
     AuthResponseDto getChargeNurse(AuthRequestDto payload);
     AuthResponseDto getNurse(AuthRequestDto authRequestDto);
-    Page<NurseDto> getNurses(Pageable pageable);
+    Page<NurseDto> getNurses(String department,Pageable pageable);
 
     NurseDto getNurseById(String id);
 }
