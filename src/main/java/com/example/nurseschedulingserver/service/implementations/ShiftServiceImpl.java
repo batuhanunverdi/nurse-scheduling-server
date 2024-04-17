@@ -1,6 +1,8 @@
 package com.example.nurseschedulingserver.service.implementations;
 
+import com.example.nurseschedulingserver.dto.shift.ExchangeShiftDto;
 import com.example.nurseschedulingserver.dto.shift.ShiftDto;
+import com.example.nurseschedulingserver.entity.shift.Shift;
 import com.example.nurseschedulingserver.repository.ShiftRepository;
 import com.example.nurseschedulingserver.service.interfaces.ShiftService;
 import lombok.RequiredArgsConstructor;
@@ -19,4 +21,26 @@ public class ShiftServiceImpl implements ShiftService {
         nurseService.getNurseById(nurseId);
         return shiftRepository.findShiftsByNurseId(nurseId, month, year);
     }
+
+    public ShiftDto getShiftById(String id) {
+        return shiftRepository.findShiftDtoById(id).orElseThrow(() -> new RuntimeException("Shift not found"));
+
+    }
+
+    @Override
+    public ExchangeShiftDto exchangeShifts(ExchangeShiftDto exchangeShiftDto) {
+        Shift shift1 = shiftRepository.findById(exchangeShiftDto.getFirstShiftId()).orElseThrow(() -> new RuntimeException("Shift not found"));
+        Shift shift2 = shiftRepository.findById(exchangeShiftDto.getSecondShiftId()).orElseThrow(() -> new RuntimeException("Shift not found"));
+
+        String tempNurseId = shift1.getNurseId();
+        shift1.setNurseId(shift2.getNurseId());
+        shift2.setNurseId(tempNurseId);
+
+        shiftRepository.save(shift1);
+        shiftRepository.save(shift2);
+
+        return exchangeShiftDto;
+    }
+
+
 }

@@ -34,6 +34,17 @@ public class NurseController {
     }
 
     @PreAuthorize("hasAuthority('CHARGE')")
+    @GetMapping("/listNurses")
+    public ResponseEntity<List<NurseDto>> getNursesList(@RequestParam(value = "department") String department) {
+        try {
+            return new ResponseEntity<>(nurseService.getNursesList(department), HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('CHARGE')")
     @GetMapping("/{id}")
     public ResponseEntity<NurseDto> getNurseById(@PathVariable(value = "id") String id) {
         try {

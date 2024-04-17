@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -44,4 +45,13 @@ public interface NurseRepository extends JpaRepository<Nurse, String> {
                             "INNER JOIN departments " +
                             "ON nurses.department_id = departments.id WHERE departments.name= ?1")
     Page<NurseDto> findAllNursesByDepartment(String department, Pageable pageable);
+
+    @Query(nativeQuery = true,
+            value =
+                    "SELECT nurses.id as id, nurses.first_name as firstName, nurses.last_name as lastName, departments.name as departmentName, " +
+                            "nurses.tc_kimlik_no as tcKimlikNo, " +
+                            "nurses.profile_picture as profilePicture FROM nurses " +
+                            "INNER JOIN departments " +
+                            "ON nurses.department_id = departments.id WHERE departments.name= ?1")
+    List<NurseDto> findAllNursesByDepartmentList(String department);
 }
