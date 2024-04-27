@@ -8,6 +8,7 @@ import com.example.nurseschedulingserver.service.interfaces.ShiftService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Calendar;
 import java.util.List;
 
 @Service
@@ -17,7 +18,10 @@ public class ShiftServiceImpl implements ShiftService {
     private final NurseServiceImpl nurseService;
 
     @Override
-    public List<ShiftDto> getShiftsByNurseId(String nurseId, String month, String year) {
+    public List<ShiftDto> getShiftsByNurseId(String nurseId) {
+        Calendar calendar = Calendar.getInstance();
+        int month = calendar.get(Calendar.MONTH) + 1;
+        int year = calendar.get(Calendar.YEAR);
         nurseService.getNurseById(nurseId);
         return shiftRepository.findShiftsByNurseId(nurseId, month, year);
     }
@@ -40,6 +44,15 @@ public class ShiftServiceImpl implements ShiftService {
         shiftRepository.save(shift2);
 
         return exchangeShiftDto;
+    }
+
+    @Override
+    public List<ShiftDto> getShifts() {
+        Calendar calendar = Calendar.getInstance();
+        int month = calendar.get(Calendar.MONTH) + 1;
+        int year = calendar.get(Calendar.YEAR);
+        return shiftRepository.findAllShiftsByMothAndYear(month,year);
+
     }
 
 
