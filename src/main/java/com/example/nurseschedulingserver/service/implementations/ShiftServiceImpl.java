@@ -55,5 +55,9 @@ public class ShiftServiceImpl implements ShiftService {
 
     }
 
+    public List<ShiftDto> getShiftsByDate(String date) {
+        return shiftRepository.findAllShiftsByDate(date);
+    }
+
 
 }
