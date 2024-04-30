@@ -63,7 +63,8 @@ public class ShiftServiceImpl implements ShiftService {
     }
 
     public List<ShiftDto> getShiftsByDate(String date) {
-        return shiftRepository.findAllShiftsByDate(date);
+        String userId = nurseService.getLoggedInUserId();
+        return shiftRepository.findAllShiftsByDate(date, userId);
     }
 
 
