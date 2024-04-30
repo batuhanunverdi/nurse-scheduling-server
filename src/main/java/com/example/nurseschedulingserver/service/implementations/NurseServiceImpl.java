@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -70,5 +71,9 @@ public class NurseServiceImpl implements NurseService {
 
     public List<NurseDto> getNursesList(String department){
         return nurseRepository.findAllNursesByDepartmentList(department);
+    }
+
+    public String getLoggedInUserId() {
+        return nurseRepository.findNurseByTcKimlikNo(SecurityContextHolder.getContext().getAuthentication().getName()).get().getId();
     }
 }

@@ -46,5 +46,15 @@ public class ShiftController {
         }
     }
 
+    @GetMapping("/my-shifts")
+    public ResponseEntity<ShiftDto> getLoggedInUserShifts(@RequestParam(name = "date") String date) {
+        try {
+            return new ResponseEntity<>(shiftService.getLoggedInUserShifts(date), HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
+
 
 }
