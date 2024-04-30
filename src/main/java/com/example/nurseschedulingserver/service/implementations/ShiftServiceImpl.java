@@ -6,6 +6,7 @@ import com.example.nurseschedulingserver.entity.shift.Shift;
 import com.example.nurseschedulingserver.repository.ShiftRepository;
 import com.example.nurseschedulingserver.service.interfaces.ShiftService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.Calendar;
@@ -53,6 +54,12 @@ public class ShiftServiceImpl implements ShiftService {
         int year = calendar.get(Calendar.YEAR);
         return shiftRepository.findAllShiftsByMothAndYear(month,year);
 
+    }
+
+    @Override
+    public ShiftDto getLoggedInUserShifts(String date) {
+        String userId = nurseService.getLoggedInUserId();
+        return shiftRepository.findShiftsByNurseIdAndDate(userId,date);
     }
 
     public List<ShiftDto> getShiftsByDate(String date) {

@@ -17,4 +17,6 @@ public interface NurseService {
 
     List<NurseDto> getNursesList(String department);
 
+    String getLoggedInUserId();
+
 }
