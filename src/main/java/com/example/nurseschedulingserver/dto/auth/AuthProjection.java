@@ -11,6 +11,7 @@ public interface AuthProjection {
     String getRole();
     String getPassword();
 
-    String getProfilePicture();
+    String getGender();
+    String getBirthDate();
 
 }

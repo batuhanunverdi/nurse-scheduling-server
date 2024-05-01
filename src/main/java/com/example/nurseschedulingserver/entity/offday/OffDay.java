@@ -1,6 +1,6 @@
 package com.example.nurseschedulingserver.entity.offday;
 
-import com.example.nurseschedulingserver.enums.OffDayRequestStatus;
+import com.example.nurseschedulingserver.enums.RequestStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -19,7 +19,7 @@ public class OffDay {
     private String date;
     private String nurseId;
     @Enumerated(EnumType.STRING)
-    private OffDayRequestStatus status;
+    private RequestStatus status;
     @CreatedDate
     private String createdAt;
     @LastModifiedDate

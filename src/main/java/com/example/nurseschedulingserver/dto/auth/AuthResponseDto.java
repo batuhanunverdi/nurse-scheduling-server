@@ -17,7 +17,10 @@ public class AuthResponseDto {
     private String phoneNumber;
     private String tcKimlikNo;
     private String role;
+    private String gender;
+    private String birthdate;
     private String errorMessage;
+    private String pictureUrl;
 
     public AuthResponseDto(String errorMessage) {
         this.errorMessage = errorMessage;

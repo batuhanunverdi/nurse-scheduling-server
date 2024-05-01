@@ -1,6 +1,6 @@
 package com.example.nurseschedulingserver.enums;
 
-public enum OffDayRequestStatus {
+public enum RequestStatus {
     PENDING,
     ACCEPTED,
     REJECTED

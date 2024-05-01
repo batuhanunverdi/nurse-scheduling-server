@@ -3,7 +3,7 @@ package com.example.nurseschedulingserver.service.implementations;
 import com.example.nurseschedulingserver.dto.offday.OffDayResponseDto;
 import com.example.nurseschedulingserver.dto.offday.OffDayUpdateDto;
 import com.example.nurseschedulingserver.entity.offday.OffDay;
-import com.example.nurseschedulingserver.enums.OffDayRequestStatus;
+import com.example.nurseschedulingserver.enums.RequestStatus;
 import com.example.nurseschedulingserver.repository.OffDayRepository;
 import com.example.nurseschedulingserver.service.interfaces.OffDayService;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +28,7 @@ public class OffDayServiceImpl implements OffDayService {
         if(offDay.isEmpty()){
            throw new Exception("Off day not found");
         }
-        offDay.get().setStatus(OffDayRequestStatus.valueOf(status));
+        offDay.get().setStatus(RequestStatus.valueOf(status));
         offDayRepository.save(offDay.get());
         return new OffDayUpdateDto(offDay.get().getId(),offDay.get().getStatus().name(),null);
     }

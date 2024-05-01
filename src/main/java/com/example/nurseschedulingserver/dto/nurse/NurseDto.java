@@ -7,5 +7,6 @@ public interface NurseDto {
     String getLastName();
     String getDepartmentName();
     String getTcKimlikNo();
-    String getProfilePicture();
+    String getGender();
+    String getBirthDate();
 }

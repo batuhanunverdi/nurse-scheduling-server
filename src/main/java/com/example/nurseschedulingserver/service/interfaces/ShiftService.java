@@ -2,6 +2,7 @@ package com.example.nurseschedulingserver.service.interfaces;
 
 import com.example.nurseschedulingserver.dto.shift.ExchangeShiftDto;
 import com.example.nurseschedulingserver.dto.shift.ShiftDto;
+import com.example.nurseschedulingserver.entity.shift.Shift;
 
 
 import java.util.List;
@@ -18,4 +19,8 @@ public interface ShiftService {
     List<ShiftDto> getNotLoggedInUsersShiftsByDate(String date);
 
     ShiftDto getLoggedInUserShifts(String date);
+
+    Shift getShiftEntityById(String id);
+
+    Shift saveShift(Shift shift);
 }

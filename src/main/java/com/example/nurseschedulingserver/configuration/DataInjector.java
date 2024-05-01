@@ -4,13 +4,11 @@ import com.example.nurseschedulingserver.dto.auth.AuthProjection;
 import com.example.nurseschedulingserver.entity.department.Department;
 import com.example.nurseschedulingserver.entity.nurse.Nurse;
 import com.example.nurseschedulingserver.entity.offday.OffDay;
+import com.example.nurseschedulingserver.entity.shift.ExchangeShiftRequest;
 import com.example.nurseschedulingserver.entity.shift.Shift;
-import com.example.nurseschedulingserver.enums.OffDayRequestStatus;
+import com.example.nurseschedulingserver.enums.RequestStatus;
 import com.example.nurseschedulingserver.enums.Role;
-import com.example.nurseschedulingserver.repository.DepartmentRepository;
-import com.example.nurseschedulingserver.repository.NurseRepository;
-import com.example.nurseschedulingserver.repository.OffDayRepository;
-import com.example.nurseschedulingserver.repository.ShiftRepository;
+import com.example.nurseschedulingserver.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
@@ -26,6 +24,7 @@ public class DataInjector implements CommandLineRunner {
     private final OffDayRepository offDayRepository;
     private final PasswordEncoder passwordEncoder;
     private final ShiftRepository shiftRepository;
+    private final ExchangeShiftRequestRepository exchangeShiftRequestRepository;
 
     @Override
     public void run(String... args) {
@@ -33,6 +32,7 @@ public class DataInjector implements CommandLineRunner {
         injectNurse();
         injectOffDays();
         injectShifts();
+        injectExchangeShiftRequests();
     }
 
     public void injectDepartments() {
@@ -66,7 +66,8 @@ public class DataInjector implements CommandLineRunner {
         nurse.setDepartmentId(departmentId);
         nurse.setPassword(passwordEncoder.encode("Sanane5885"));
         nurse.setRole(Role.CHARGE);
-        nurse.setProfilePicture("https://cdn-icons-png.flaticon.com/512/8496/8496122.png");
+        nurse.setGender("Erkek");
+        nurse.setBirthDate("09.06.1998");
         nurses.add(nurse);
 
         Nurse nurse2 = new Nurse();
@@ -77,7 +78,8 @@ public class DataInjector implements CommandLineRunner {
         nurse2.setDepartmentId(departmentId);
         nurse2.setPassword(passwordEncoder.encode("Sanane5885"));
         nurse2.setRole(Role.NURSE);
-        nurse2.setProfilePicture("https://cdn-icons-png.flaticon.com/512/8496/8496122.png");
+        nurse2.setGender("Erkek");
+        nurse.setBirthDate("09.06.1998");
         nurses.add(nurse2);
 
         Nurse nurse3 = new Nurse();
@@ -88,7 +90,8 @@ public class DataInjector implements CommandLineRunner {
         nurse3.setDepartmentId(depaartmentId2);
         nurse3.setPassword(passwordEncoder.encode("Sanane5885"));
         nurse3.setRole(Role.NURSE);
-        nurse3.setProfilePicture("https://cdn-icons-png.flaticon.com/512/8496/8496122.png");
+        nurse3.setGender("Kadın");
+        nurse.setBirthDate("09.06.1998");
         nurses.add(nurse3);
         nurseRepository.saveAll(nurses);
 
@@ -119,10 +122,10 @@ public class DataInjector implements CommandLineRunner {
         dates.add("22.04.2024");
         List<OffDay> offDays = new ArrayList<>();
 
-        List<OffDayRequestStatus> statuses = List.of(
-                OffDayRequestStatus.ACCEPTED,
-                OffDayRequestStatus.REJECTED,
-                OffDayRequestStatus.PENDING
+        List<RequestStatus> statuses = List.of(
+                RequestStatus.ACCEPTED,
+                RequestStatus.REJECTED,
+                RequestStatus.PENDING
         );
 
         for (int i = 0; i <15 ; i++) {
@@ -180,6 +183,16 @@ public class DataInjector implements CommandLineRunner {
         shifts.add(shift5);
 
         shiftRepository.saveAll(shifts);
+
+    }
+    public void injectExchangeShiftRequests(){
+    List<Shift> shifts = shiftRepository.findAll();
+    ExchangeShiftRequest exchangeShiftRequest = new ExchangeShiftRequest();
+    exchangeShiftRequest.setRequesterShiftId(shifts.get(0).getId());
+    exchangeShiftRequest.setRequestedShiftId(shifts.get(1).getId());
+    exchangeShiftRequest.setStatus(RequestStatus.PENDING);
+    exchangeShiftRequestRepository.save(exchangeShiftRequest);
+
 
     }
 }

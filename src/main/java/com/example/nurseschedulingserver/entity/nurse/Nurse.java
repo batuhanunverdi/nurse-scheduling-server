@@ -26,9 +26,10 @@ public class Nurse {
     private String phoneNumber;
     private String departmentId;
     private String password;
-    private String profilePicture;
     @Enumerated(EnumType.STRING)
     private Role role;
+    private String gender;
+    private String birthDate;
 
 
 }

@@ -29,7 +29,6 @@ public class ShiftServiceImpl implements ShiftService {
 
     public ShiftDto getShiftById(String id) {
         return shiftRepository.findShiftDtoById(id).orElseThrow(() -> new RuntimeException("Shift not found"));
-
     }
 
     @Override
@@ -61,6 +60,16 @@ public class ShiftServiceImpl implements ShiftService {
     public ShiftDto getLoggedInUserShifts(String date) {
         AuthProjection user = nurseService.getLoggedInUser();
         return shiftRepository.findShiftsByNurseIdAndDate(user.getId(),date);
+    }
+
+    @Override
+    public Shift getShiftEntityById(String id) {
+        return shiftRepository.findById(id).orElseThrow(() -> new RuntimeException("Shift not found"));
+    }
+
+    @Override
+    public Shift saveShift(Shift shift) {
+        return shiftRepository.save(shift);
     }
 
     public List<ShiftDto> getNotLoggedInUsersShiftsByDate(String date) {
