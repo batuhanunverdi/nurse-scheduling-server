@@ -15,7 +15,7 @@ public interface ShiftService {
 
     List<ShiftDto> getShifts();
 
-    List<ShiftDto> getShiftsByDate(String date);
+    List<ShiftDto> getNotLoggedInUsersShiftsByDate(String date);
 
     ShiftDto getLoggedInUserShifts(String date);
 }

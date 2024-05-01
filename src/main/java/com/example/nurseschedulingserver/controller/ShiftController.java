@@ -6,6 +6,7 @@ import com.example.nurseschedulingserver.service.interfaces.ShiftService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,6 +28,7 @@ public class ShiftController {
     }
 
     @PatchMapping("/exchange")
+    @PreAuthorize("hasAuthority('CHARGE')")
     public ResponseEntity<ExchangeShiftDto> patchShiftById(@RequestBody ExchangeShiftDto exchangeShiftDto) {
         try {
             return new ResponseEntity<>(shiftService.exchangeShifts(exchangeShiftDto), HttpStatus.OK);
@@ -37,6 +39,7 @@ public class ShiftController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('CHARGE')")
     public ResponseEntity<List<ShiftDto>> getShifts() {
         try {
             return new ResponseEntity<>(shiftService.getShifts(), HttpStatus.OK);
@@ -55,11 +58,11 @@ public class ShiftController {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
-
-    @GetMapping("/date")
-    public ResponseEntity<List<ShiftDto>> getShiftsByDate(@RequestParam(value = "date") String date) {
+   //refactor
+    @GetMapping("/other-shifts")
+    public ResponseEntity<List<ShiftDto>> getNotLoggedInUsersShiftsByDate(@RequestParam(value = "date") String date) {
         try {
-            return new ResponseEntity<>(shiftService.getShiftsByDate(date), HttpStatus.OK);
+            return new ResponseEntity<>(shiftService.getNotLoggedInUsersShiftsByDate(date), HttpStatus.OK);
         } catch (Exception e) {
             e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);

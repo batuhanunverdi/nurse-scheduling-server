@@ -1,12 +1,12 @@
 package com.example.nurseschedulingserver.service.implementations;
 
+import com.example.nurseschedulingserver.dto.auth.AuthProjection;
 import com.example.nurseschedulingserver.dto.shift.ExchangeShiftDto;
 import com.example.nurseschedulingserver.dto.shift.ShiftDto;
 import com.example.nurseschedulingserver.entity.shift.Shift;
 import com.example.nurseschedulingserver.repository.ShiftRepository;
 import com.example.nurseschedulingserver.service.interfaces.ShiftService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.Calendar;
@@ -58,13 +58,13 @@ public class ShiftServiceImpl implements ShiftService {
 
     @Override
     public ShiftDto getLoggedInUserShifts(String date) {
-        String userId = nurseService.getLoggedInUserId();
-        return shiftRepository.findShiftsByNurseIdAndDate(userId,date);
+        AuthProjection user = nurseService.getLoggedInUser();
+        return shiftRepository.findShiftsByNurseIdAndDate(user.getId(),date);
     }
 
-    public List<ShiftDto> getShiftsByDate(String date) {
-        String userId = nurseService.getLoggedInUserId();
-        return shiftRepository.findAllShiftsByDate(date, userId);
+    public List<ShiftDto> getNotLoggedInUsersShiftsByDate(String date) {
+        AuthProjection user = nurseService.getLoggedInUser();
+        return shiftRepository.findAllShiftsByDate(date, user.getId(),user.getDepartmentName());
     }
 
 

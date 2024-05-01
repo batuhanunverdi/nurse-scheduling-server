@@ -64,7 +64,6 @@ public class NurseServiceImpl implements NurseService {
         return nurseRepository.findNurseById(id).orElseThrow(() -> new RuntimeException("Nurse not found"));
     }
 
-
     private AuthResponseDto convertToDto(AuthProjection authProjection) {
         return modelMapper.map(authProjection, AuthResponseDto.class);
     }
@@ -73,7 +72,11 @@ public class NurseServiceImpl implements NurseService {
         return nurseRepository.findAllNursesByDepartmentList(department);
     }
 
-    public String getLoggedInUserId() {
-        return nurseRepository.findNurseByTcKimlikNo(SecurityContextHolder.getContext().getAuthentication().getName()).get().getId();
+    public AuthProjection getLoggedInUser() {
+        return nurseRepository.findNurseByTcKimlikNo(SecurityContextHolder
+                .getContext()
+                        .getAuthentication()
+                        .getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
     }
 }

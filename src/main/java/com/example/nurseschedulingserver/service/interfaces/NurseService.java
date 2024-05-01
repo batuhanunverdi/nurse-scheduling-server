@@ -1,5 +1,6 @@
 package com.example.nurseschedulingserver.service.interfaces;
 
+import com.example.nurseschedulingserver.dto.auth.AuthProjection;
 import com.example.nurseschedulingserver.dto.auth.AuthRequestDto;
 import com.example.nurseschedulingserver.dto.auth.AuthResponseDto;
 import com.example.nurseschedulingserver.dto.nurse.NurseDto;
@@ -17,6 +18,6 @@ public interface NurseService {
 
     List<NurseDto> getNursesList(String department);
 
-    String getLoggedInUserId();
+    AuthProjection getLoggedInUser();
 
 }
