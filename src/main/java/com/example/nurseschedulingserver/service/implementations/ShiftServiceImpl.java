@@ -52,7 +52,8 @@ public class ShiftServiceImpl implements ShiftService {
         Calendar calendar = Calendar.getInstance();
         int month = calendar.get(Calendar.MONTH) + 1;
         int year = calendar.get(Calendar.YEAR);
-        return shiftRepository.findAllShiftsByMothAndYear(month,year);
+        AuthProjection user = nurseService.getLoggedInUser();
+        return shiftRepository.findAllShiftsByMothAndYear(month,year,user.getDepartmentName());
 
     }
 

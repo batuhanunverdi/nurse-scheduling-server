@@ -56,6 +56,7 @@ public class DataInjector implements CommandLineRunner {
     }
     public void injectNurse(){
         String departmentId = departmentRepository.findByName("Acil Servis").orElseThrow().getId();
+        String depaartmentId2 = departmentRepository.findByName("Yoğun Bakım Ünitesi").orElseThrow().getId();
         List<Nurse> nurses = nurseRepository.findAll();
         Nurse nurse = new Nurse();
         nurse.setFirstName("Mert Batuhan");
@@ -84,7 +85,7 @@ public class DataInjector implements CommandLineRunner {
         nurse3.setLastName("Yılmaz");
         nurse3.setTcKimlikNo("12345678902");
         nurse3.setPhoneNumber("0532 123 45 67");
-        nurse3.setDepartmentId(departmentId);
+        nurse3.setDepartmentId(depaartmentId2);
         nurse3.setPassword(passwordEncoder.encode("Sanane5885"));
         nurse3.setRole(Role.NURSE);
         nurse3.setProfilePicture("https://cdn-icons-png.flaticon.com/512/8496/8496122.png");
