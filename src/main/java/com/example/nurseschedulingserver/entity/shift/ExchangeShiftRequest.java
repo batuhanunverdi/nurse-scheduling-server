@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.UuidGenerator;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 
 @Getter
 @Setter
@@ -22,4 +24,8 @@ public class ExchangeShiftRequest {
     private String requestedShiftId;
     @Enumerated(EnumType.STRING)
     private RequestStatus status;
+    @CreatedDate
+    private String createdAt;
+    @LastModifiedDate
+    private String updatedAt;
 }

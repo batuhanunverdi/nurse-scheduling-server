@@ -6,6 +6,7 @@ import com.example.nurseschedulingserver.entity.nurse.Nurse;
 import com.example.nurseschedulingserver.entity.offday.OffDay;
 import com.example.nurseschedulingserver.entity.shift.ExchangeShiftRequest;
 import com.example.nurseschedulingserver.entity.shift.Shift;
+import com.example.nurseschedulingserver.entity.workday.WorkDay;
 import com.example.nurseschedulingserver.enums.RequestStatus;
 import com.example.nurseschedulingserver.enums.Role;
 import com.example.nurseschedulingserver.repository.*;
@@ -14,6 +15,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Configuration
@@ -25,14 +28,15 @@ public class DataInjector implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
     private final ShiftRepository shiftRepository;
     private final ExchangeShiftRequestRepository exchangeShiftRequestRepository;
-
+    private final WorkDayRepository workDayRepository;
     @Override
-    public void run(String... args) {
+    public void run(String... args) throws ParseException {
         injectDepartments();
         injectNurse();
         injectOffDays();
         injectShifts();
         injectExchangeShiftRequests();
+        injectWorkDays();
     }
 
     public void injectDepartments() {
@@ -194,5 +198,28 @@ public class DataInjector implements CommandLineRunner {
     exchangeShiftRequestRepository.save(exchangeShiftRequest);
 
 
+    }
+
+    public void injectWorkDays() throws ParseException {
+        List<WorkDay> workDays = new ArrayList<>();
+        AuthProjection nurse = nurseRepository.findNurseByTcKimlikNo("37012561724").orElseThrow();
+
+        List<Date> dates = new ArrayList<>();
+        List<String> stringDates = new ArrayList<>();
+        stringDates.add("08.05.2024");
+        stringDates.add("09.05.2024");
+        stringDates.add("10.05.2024");
+        stringDates.add("11.05.2024");
+        for (String stringDate : stringDates) {
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd.MM.yyyy");
+            Date date = simpleDateFormat.parse(stringDate);
+            dates.add(date);
+        }
+
+        WorkDay workDay = new WorkDay();
+        workDay.setWorkDate(dates);
+        workDay.setNurseId(nurse.getId());
+        workDays.add(workDay);
+        workDayRepository.saveAll(workDays);
     }
 }

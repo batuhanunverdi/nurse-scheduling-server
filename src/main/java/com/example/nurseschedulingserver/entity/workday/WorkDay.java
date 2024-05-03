@@ -4,10 +4,11 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.UuidGenerator;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 
 import java.util.ArrayList;
-import java.sql.Date;
+import java.util.Date;
 import java.util.List;
 
 
@@ -21,6 +22,10 @@ public class WorkDay {
     private String id;
     private String nurseId;
     @ElementCollection(targetClass = Date.class, fetch = FetchType.EAGER)
-    private List<Date> workDate = new ArrayList<Date>();
+    private List<Date> workDate = new ArrayList<>();
+    @CreatedDate
+    private Date createdAt;
+    @LastModifiedDate
+    private Date updatedAt;
 
 }
