@@ -10,4 +10,5 @@ public interface WorkDayService {
     WorkDayResponseDto saveWorkDays(WorkDayRequestDto workDays);
 
 
+    List<WorkDayResponseDto> getWorkDays(int month, int year);
 }

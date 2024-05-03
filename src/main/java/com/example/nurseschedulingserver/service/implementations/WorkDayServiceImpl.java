@@ -9,9 +9,8 @@ import com.example.nurseschedulingserver.service.interfaces.NurseService;
 import com.example.nurseschedulingserver.service.interfaces.WorkDayService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-
+import java.util.List;
 import java.util.Optional;
 
 
@@ -23,11 +22,11 @@ public class WorkDayServiceImpl implements WorkDayService {
     @Override
     public WorkDayResponseDto saveWorkDays(WorkDayRequestDto workDays) {
         AuthProjection user = nurseService.getLoggedInUser();
-        Optional<WorkDay> workDayResponseDto = workDayRepository.findByNurseId(user.getId());
+        Optional<WorkDay> loggedInUserWorkDay = workDayRepository.findByNurseId(user.getId());
         WorkDay workDay;
         String message;
-        if (workDayResponseDto.isPresent()) {
-            workDay = workDayResponseDto.get();
+        if (loggedInUserWorkDay.isPresent()) {
+            workDay = loggedInUserWorkDay.get();
             workDay.setWorkDate(workDays.getWorkDate());
             message = "Work day updated successfully";
         }else {
@@ -41,6 +40,12 @@ public class WorkDayServiceImpl implements WorkDayService {
 
         return new WorkDayResponseDto(workDay.getId(), workDay.getWorkDate(), workDay.getNurseId(),message);
 
+    }
+
+    @Override
+    public List<WorkDayResponseDto> getWorkDays(int month, int year) {
+        AuthProjection user = nurseService.getLoggedInUser();
+        return workDayRepository.findAllByNurseIdAndDate(user.getId(),month,year);
     }
 
 
