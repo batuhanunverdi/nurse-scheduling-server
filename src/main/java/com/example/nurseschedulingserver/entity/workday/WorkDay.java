@@ -1,11 +1,14 @@
 package com.example.nurseschedulingserver.entity.workday;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.UuidGenerator;
+import org.springframework.data.jpa.repository.Query;
+
+import java.util.ArrayList;
+import java.sql.Date;
+import java.util.List;
 
 
 @Getter
@@ -17,6 +20,7 @@ public class WorkDay {
     @UuidGenerator
     private String id;
     private String nurseId;
-    private String workDate;
+    @ElementCollection(targetClass = Date.class, fetch = FetchType.EAGER)
+    private List<Date> workDate = new ArrayList<Date>();
 
 }

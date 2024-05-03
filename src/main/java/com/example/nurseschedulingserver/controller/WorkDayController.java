@@ -1,5 +1,6 @@
 package com.example.nurseschedulingserver.controller;
 
+import com.example.nurseschedulingserver.dto.workday.WorkDayRequestDto;
 import com.example.nurseschedulingserver.dto.workday.WorkDayResponseDto;
 import com.example.nurseschedulingserver.entity.workday.WorkDay;
 import com.example.nurseschedulingserver.service.interfaces.WorkDayService;
@@ -19,7 +20,7 @@ import java.util.List;
 public class WorkDayController {
     private final WorkDayService workDayService;
     @PostMapping("/generate")
-    public ResponseEntity<List<WorkDayResponseDto>> postWorkDays(@RequestBody List<WorkDay> workDayList) {
+    public ResponseEntity<WorkDayResponseDto> postWorkDays(@RequestBody WorkDayRequestDto workDayList) {
         try{
             return new ResponseEntity<>(workDayService.saveWorkDays(workDayList), HttpStatus.OK);
         }

@@ -1,5 +1,6 @@
 package com.example.nurseschedulingserver.dto.workday;
 
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,9 +13,6 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class WorkDayResponseDto {
-    private String Id;
+public class WorkDayRequestDto {
     private List<Date> workDate;
-    private String nurseId;
-    private String message;
 }
