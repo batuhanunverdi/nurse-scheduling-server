@@ -10,7 +10,7 @@ import com.example.nurseschedulingserver.service.interfaces.WorkDayService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.util.ArrayList;
 import java.util.Optional;
 
 
@@ -23,14 +23,13 @@ public class WorkDayServiceImpl implements WorkDayService {
     public WorkDayResponseDto saveWorkDays(WorkDayRequestDto workDays) {
         AuthProjection user = nurseService.getLoggedInUser();
         Optional<WorkDay> loggedInUserWorkDay = workDayRepository.findByNurseId(user.getId());
-        WorkDay workDay;
+        WorkDay workDay = new WorkDay();
         String message;
         if (loggedInUserWorkDay.isPresent()) {
             workDay = loggedInUserWorkDay.get();
             workDay.setWorkDate(workDays.getWorkDate());
             message = "Work day updated successfully";
         }else {
-            workDay = new WorkDay();
             workDay.setNurseId(user.getId());
             workDay.setWorkDate(workDays.getWorkDate());
             message = "Work day created successfully";
@@ -39,13 +38,18 @@ public class WorkDayServiceImpl implements WorkDayService {
         workDay = workDayRepository.save(workDay);
 
         return new WorkDayResponseDto(workDay.getId(), workDay.getWorkDate(), workDay.getNurseId(),message);
-
     }
 
     @Override
-    public List<WorkDayResponseDto> getWorkDays(int month, int year) {
+    public WorkDayResponseDto getWorkDays(String month, String year) {
         AuthProjection user = nurseService.getLoggedInUser();
-        return workDayRepository.findAllByNurseIdAndDate(user.getId(),month,year);
+        int monthInt = Integer.parseInt(month);
+        int yearInt = Integer.parseInt(year);
+        WorkDay workDays =  workDayRepository.findAllByNurseIdAndDate(user.getId(),monthInt,yearInt);
+        if(workDays == null){
+            return new WorkDayResponseDto("",new ArrayList<>(),"","Work day not found");
+        }
+        return new WorkDayResponseDto(workDays.getId(),workDays.getWorkDate(),workDays.getNurseId(),"");
     }
 
 

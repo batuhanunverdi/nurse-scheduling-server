@@ -206,12 +206,13 @@ public class DataInjector implements CommandLineRunner {
 
         List<Date> dates = new ArrayList<>();
         List<String> stringDates = new ArrayList<>();
-        stringDates.add("08.05.2024");
-        stringDates.add("09.05.2024");
-        stringDates.add("10.05.2024");
-        stringDates.add("11.05.2024");
+        stringDates.add("08.06.2024");
+        stringDates.add("09.06.2024");
+        stringDates.add("10.06.2024");
+        stringDates.add("11.06.2024");
         for (String stringDate : stringDates) {
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd.MM.yyyy");
+            simpleDateFormat.setTimeZone(TimeZone.getTimeZone("Europe/Istanbul"));
             Date date = simpleDateFormat.parse(stringDate);
             dates.add(date);
         }

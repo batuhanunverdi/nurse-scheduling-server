@@ -8,8 +8,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/workdays")
 @RequiredArgsConstructor
@@ -26,11 +24,12 @@ public class WorkDayController {
     }
 
     @GetMapping
-    public ResponseEntity<List<WorkDayResponseDto>> getWorkDays(@RequestParam(name = "month") int month, @RequestParam(name = "year") int year) {
+    public ResponseEntity<WorkDayResponseDto> getWorkDays(@RequestParam(name = "month") String month, @RequestParam(name = "year") String year) {
         try{
             return new ResponseEntity<>(workDayService.getWorkDays(month,year), HttpStatus.OK);
         }
         catch (Exception e){
+            e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
