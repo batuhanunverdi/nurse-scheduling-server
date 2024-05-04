@@ -33,7 +33,6 @@ public class NurseController {
         }
     }
 
-    @PreAuthorize("hasAuthority('CHARGE')")
     @GetMapping("/listNurses")
     public ResponseEntity<List<NurseDto>> getNursesList(@RequestParam(value = "department") String department) {
         try {

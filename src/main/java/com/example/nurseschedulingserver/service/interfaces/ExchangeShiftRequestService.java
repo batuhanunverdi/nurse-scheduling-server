@@ -1,5 +1,6 @@
 package com.example.nurseschedulingserver.service.interfaces;
 
+import com.example.nurseschedulingserver.dto.shift.CreateExchangeShiftRequestDto;
 import com.example.nurseschedulingserver.dto.shift.ExchangeShiftRequestDto;
 
 import java.util.List;
@@ -13,4 +14,5 @@ public interface ExchangeShiftRequestService {
     String rejectExchangeShiftRequest(String id);
 
 
+    String createExchangeShiftRequest(CreateExchangeShiftRequestDto createExchangeShiftRequestDto);
 }

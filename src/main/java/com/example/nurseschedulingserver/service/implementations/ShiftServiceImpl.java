@@ -1,6 +1,7 @@
 package com.example.nurseschedulingserver.service.implementations;
 
 import com.example.nurseschedulingserver.dto.auth.AuthProjection;
+import com.example.nurseschedulingserver.dto.nurse.NurseDto;
 import com.example.nurseschedulingserver.dto.shift.ExchangeShiftDto;
 import com.example.nurseschedulingserver.dto.shift.ShiftDto;
 import com.example.nurseschedulingserver.entity.shift.Shift;
@@ -57,7 +58,7 @@ public class ShiftServiceImpl implements ShiftService {
     }
 
     @Override
-    public ShiftDto getLoggedInUserShifts(String date) {
+    public ShiftDto getLoggedInUserShiftsByDate(String date) {
         AuthProjection user = nurseService.getLoggedInUser();
         return shiftRepository.findShiftsByNurseIdAndDate(user.getId(),date);
     }
@@ -70,6 +71,14 @@ public class ShiftServiceImpl implements ShiftService {
     @Override
     public Shift saveShift(Shift shift) {
         return shiftRepository.save(shift);
+    }
+
+    @Override
+    public List<ShiftDto> getShiftsByMonthAndYear(String id,String month, String year) {
+        NurseDto nurse = nurseService.getNurseById(id);
+        int monthInt = Integer.parseInt(month);
+        int yearInt = Integer.parseInt(year);
+        return shiftRepository.findShiftsByNurseIdAndMonthAndYearAndDepartmentName(nurse.getId(), monthInt,yearInt,nurse.getDepartmentName());
     }
 
     public List<ShiftDto> getNotLoggedInUsersShiftsByDate(String date) {

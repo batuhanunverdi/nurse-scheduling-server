@@ -65,4 +65,16 @@ public interface ShiftRepository extends JpaRepository<Shift, String> {
                     "WHERE CAST(shifts.start_date AS DATE) = CAST(?1 AS DATE) AND shifts.nurse_id <> ?2 AND d.name = ?3"
     )
     List<ShiftDto> findAllShiftsByDate(String date, String nurseId,String departmentName);
+
+    @Query(nativeQuery = true ,
+            value = "SELECT shifts.id as id, shifts.start_date as startDate, shifts.end_date as endDate, shifts.nurse_id as nurseId, " +
+                    "nurses.first_name as nurseFirstName, nurses.last_name as nurseLastName " +
+                    "FROM shifts " +
+                    "INNER JOIN nurses " +
+                    "ON shifts.nurse_id = nurses.id " +
+                    "INNER JOIN departments d on nurses.department_id = d.id " +
+                    "WHERE EXTRACT(MONTH FROM shifts.start_date) = :month " +
+                    "AND EXTRACT(YEAR FROM shifts.start_date) = :year AND d.name = :departmentName AND shifts.nurse_id = :nurseId"
+    )
+    List<ShiftDto> findShiftsByNurseIdAndMonthAndYearAndDepartmentName(String nurseId, int month, int year, String departmentName);
 }

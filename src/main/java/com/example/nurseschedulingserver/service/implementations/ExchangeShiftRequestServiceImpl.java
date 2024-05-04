@@ -1,6 +1,7 @@
 package com.example.nurseschedulingserver.service.implementations;
 
 import com.example.nurseschedulingserver.dto.auth.AuthProjection;
+import com.example.nurseschedulingserver.dto.shift.CreateExchangeShiftRequestDto;
 import com.example.nurseschedulingserver.dto.shift.ExchangeShiftRequestDto;
 import com.example.nurseschedulingserver.entity.shift.ExchangeShiftRequest;
 import com.example.nurseschedulingserver.entity.shift.Shift;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Calendar;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -52,5 +54,20 @@ public class ExchangeShiftRequestServiceImpl implements ExchangeShiftRequestServ
         exchangeShiftRequestRepository.save(exchangeShiftRequest);
         return exchangeShiftRequest.getStatus().name();
     }
-    
+    @Override
+    public String createExchangeShiftRequest(CreateExchangeShiftRequestDto createExchangeShiftRequestDto) {
+        Optional<ExchangeShiftRequest> exchangeShiftRequestOptional = exchangeShiftRequestRepository.findByRequesterShiftIdAndRequestedShiftId
+                (createExchangeShiftRequestDto.getRequesterShiftId(),
+                        createExchangeShiftRequestDto.getRequestedShiftId());
+        if(exchangeShiftRequestOptional.isPresent() && exchangeShiftRequestOptional.get().getStatus() == RequestStatus.PENDING){
+            return "Bu vardiya değişim isteği zaten mevcut";
+        }
+        ExchangeShiftRequest exchangeShiftRequest = new ExchangeShiftRequest();
+        exchangeShiftRequest.setRequesterShiftId(createExchangeShiftRequestDto.getRequesterShiftId());
+        exchangeShiftRequest.setRequestedShiftId(createExchangeShiftRequestDto.getRequestedShiftId());
+        exchangeShiftRequest.setStatus(RequestStatus.PENDING);
+        exchangeShiftRequestRepository.save(exchangeShiftRequest);
+        return "Vardiya değişim isteği başarıyla oluşturuldu";
+    }
+
 }

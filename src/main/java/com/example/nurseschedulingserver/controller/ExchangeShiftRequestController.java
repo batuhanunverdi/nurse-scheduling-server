@@ -1,5 +1,6 @@
 package com.example.nurseschedulingserver.controller;
 
+import com.example.nurseschedulingserver.dto.shift.CreateExchangeShiftRequestDto;
 import com.example.nurseschedulingserver.dto.shift.ExchangeShiftRequestDto;
 import com.example.nurseschedulingserver.service.interfaces.ExchangeShiftRequestService;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,16 @@ public class ExchangeShiftRequestController {
     public ResponseEntity<String> rejectExchangeShiftRequest(@PathVariable String id) {
         try {
             return new ResponseEntity<>(exchangeShiftRequestService.rejectExchangeShiftRequest(id), HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PostMapping
+    public ResponseEntity<String> createExchangeShiftRequest(@RequestBody CreateExchangeShiftRequestDto createExchangeShiftRequestDto) {
+        try {
+            return new ResponseEntity<>(exchangeShiftRequestService.createExchangeShiftRequest(createExchangeShiftRequestDto), HttpStatus.OK);
         } catch (Exception e) {
             e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);

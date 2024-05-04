@@ -50,9 +50,18 @@ public class ShiftController {
     }
 
     @GetMapping("/my-shifts")
-    public ResponseEntity<ShiftDto> getLoggedInUserShifts(@RequestParam(name = "date") String date) {
+    public ResponseEntity<ShiftDto> getLoggedInUserShiftsByDate(@RequestParam(name = "date") String date) {
         try {
-            return new ResponseEntity<>(shiftService.getLoggedInUserShifts(date), HttpStatus.OK);
+            return new ResponseEntity<>(shiftService.getLoggedInUserShiftsByDate(date), HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
+    @GetMapping("/{id}/{month}/{year}")
+    public ResponseEntity<List<ShiftDto>> getShiftsByMonthAndYear(@PathVariable(name = "id") String id ,@PathVariable(name = "month") String month, @PathVariable(name = "year") String year) {
+        try {
+            return new ResponseEntity<>(shiftService.getShiftsByMonthAndYear(id,month,year), HttpStatus.OK);
         } catch (Exception e) {
             e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);

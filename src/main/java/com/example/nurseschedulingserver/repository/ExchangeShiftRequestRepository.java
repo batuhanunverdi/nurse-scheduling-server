@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ExchangeShiftRequestRepository extends JpaRepository<ExchangeShiftRequest, String> {
@@ -36,4 +37,6 @@ public interface ExchangeShiftRequestRepository extends JpaRepository<ExchangeSh
             "AND MONTH(s2.startDate) = ?2 " +
             "AND YEAR(s2.startDate) = ?3")
     List<ExchangeShiftRequestDto> findAllByRequestedShiftId(String requestedShiftId,int month,int year);
+
+    Optional<ExchangeShiftRequest> findByRequesterShiftIdAndRequestedShiftId(String requesterShiftId, String requestedShiftId);
 }

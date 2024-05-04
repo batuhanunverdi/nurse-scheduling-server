@@ -4,9 +4,9 @@ import com.example.nurseschedulingserver.enums.RequestStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 
 @Getter
 @Setter
@@ -20,8 +20,8 @@ public class OffDay {
     private String nurseId;
     @Enumerated(EnumType.STRING)
     private RequestStatus status;
-    @CreatedDate
+    @CreationTimestamp
     private String createdAt;
-    @LastModifiedDate
+    @UpdateTimestamp
     private String updatedAt;
 }

@@ -3,9 +3,9 @@ package com.example.nurseschedulingserver.entity.workday;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -23,9 +23,9 @@ public class WorkDay {
     private String nurseId;
     @ElementCollection(targetClass = Date.class, fetch = FetchType.EAGER)
     private List<Date> workDate = new ArrayList<>();
-    @CreatedDate
+    @CreationTimestamp
     private Date createdAt;
-    @LastModifiedDate
+    @UpdateTimestamp
     private Date updatedAt;
 
 }
