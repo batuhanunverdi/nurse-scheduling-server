@@ -8,6 +8,6 @@ spring:
   datasource:
     type: org.springframework.jdbc.datasource.DriverManagerDataSource
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/nurse-scheduling
-    username: postgres
-    password: Sanane5885
+    url: jdbc:postgresql://pg-20566c82-mbatuhanunverdi-a6e5.e.aivencloud.com:10856/defaultdb
+    username: avnadmin
+    password: AVNS_KY2VHW6GO89nSvQpc8_
