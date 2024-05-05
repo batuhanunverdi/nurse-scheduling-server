@@ -1,10 +1,12 @@
 package com.example.nurseschedulingserver.service.implementations;
 
+import com.example.nurseschedulingserver.dto.auth.AuthProjection;
 import com.example.nurseschedulingserver.dto.offday.OffDayResponseDto;
 import com.example.nurseschedulingserver.dto.offday.OffDayUpdateDto;
 import com.example.nurseschedulingserver.entity.offday.OffDay;
 import com.example.nurseschedulingserver.enums.RequestStatus;
 import com.example.nurseschedulingserver.repository.OffDayRepository;
+import com.example.nurseschedulingserver.service.interfaces.NurseService;
 import com.example.nurseschedulingserver.service.interfaces.OffDayService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -17,9 +19,11 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class OffDayServiceImpl implements OffDayService {
     private final OffDayRepository offDayRepository;
+    private final NurseService nurseService;
     @Override
     public Page<OffDayResponseDto> getOffDaysAsPagination(Pageable pageable,String status) {
-        return offDayRepository.findAllWithinPageAndStatus(status,pageable);
+        AuthProjection user = nurseService.getLoggedInUser();
+        return offDayRepository.findAllWithinPageAndStatus(status,user.getDepartmentName(),pageable);
     }
 
     @Override

@@ -17,6 +17,6 @@ public interface OffDayRepository extends JpaRepository<OffDay, String> {
                             "off_days.nurse_id as nurseId, off_days.status as status " +
                             "FROM off_days " +
                             "INNER JOIN nurses " +
-                            "ON off_days.nurse_id = nurses.id WHERE off_days.status = ?1 ORDER BY off_days.date DESC")
-    Page<OffDayResponseDto> findAllWithinPageAndStatus(String status,Pageable pageable);
+                            "ON off_days.nurse_id = nurses.id INNER JOIN departments d on nurses.department_id = d.id WHERE off_days.status = ?1 AND d.name=?2 ORDER BY off_days.date DESC")
+    Page<OffDayResponseDto> findAllWithinPageAndStatus(String status,String departmentName,Pageable pageable);
 }
