@@ -4,7 +4,7 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     show-sql: false
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
   datasource:
     type: org.springframework.jdbc.datasource.DriverManagerDataSource
     driver-class-name: org.postgresql.Driver
