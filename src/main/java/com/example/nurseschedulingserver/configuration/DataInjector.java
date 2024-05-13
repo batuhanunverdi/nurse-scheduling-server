@@ -10,6 +10,7 @@ import com.example.nurseschedulingserver.entity.workday.WorkDay;
 import com.example.nurseschedulingserver.enums.RequestStatus;
 import com.example.nurseschedulingserver.enums.Role;
 import com.example.nurseschedulingserver.repository.*;
+import com.example.nurseschedulingserver.service.interfaces.CPService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
@@ -29,6 +30,7 @@ public class DataInjector implements CommandLineRunner {
     private final ShiftRepository shiftRepository;
     private final ExchangeShiftRequestRepository exchangeShiftRequestRepository;
     private final WorkDayRepository workDayRepository;
+    private final CPService cpService;
     @Override
     public void run(String... args) throws ParseException {
         injectDepartments();
@@ -37,6 +39,7 @@ public class DataInjector implements CommandLineRunner {
         injectShifts();
         injectExchangeShiftRequests();
         injectWorkDays();
+        cpService.createShiftsByDepartment();
     }
 
     public void injectDepartments() {
@@ -60,7 +63,7 @@ public class DataInjector implements CommandLineRunner {
     }
     public void injectNurse(){
         String departmentId = departmentRepository.findByName("Acil Servis").orElseThrow().getId();
-        String depaartmentId2 = departmentRepository.findByName("Yoğun Bakım Ünitesi").orElseThrow().getId();
+        String departmentId2 = departmentRepository.findByName("Yoğun Bakım Ünitesi").orElseThrow().getId();
         List<Nurse> nurses = nurseRepository.findAll();
         Nurse nurse = new Nurse();
         nurse.setFirstName("Mert Batuhan");
@@ -74,29 +77,21 @@ public class DataInjector implements CommandLineRunner {
         nurse.setBirthDate("09.06.1998");
         nurses.add(nurse);
 
-        Nurse nurse2 = new Nurse();
-        nurse2.setFirstName("Mehmet");
-        nurse2.setLastName("Yılmaz");
-        nurse2.setTcKimlikNo("12345678901");
-        nurse2.setPhoneNumber("0532 123 45 67");
-        nurse2.setDepartmentId(departmentId);
-        nurse2.setPassword(passwordEncoder.encode("Sanane5885"));
-        nurse2.setRole(Role.NURSE);
-        nurse2.setGender("Erkek");
-        nurse.setBirthDate("09.06.1998");
-        nurses.add(nurse2);
+        String defaultPassword = "Sanane5885";
 
-        Nurse nurse3 = new Nurse();
-        nurse3.setFirstName("Ayşe");
-        nurse3.setLastName("Yılmaz");
-        nurse3.setTcKimlikNo("12345678902");
-        nurse3.setPhoneNumber("0532 123 45 67");
-        nurse3.setDepartmentId(depaartmentId2);
-        nurse3.setPassword(passwordEncoder.encode("Sanane5885"));
-        nurse3.setRole(Role.NURSE);
-        nurse3.setGender("Kadın");
-        nurse.setBirthDate("09.06.1998");
-        nurses.add(nurse3);
+        for (int i = 0; i < 10; i++) {
+            Nurse nurse2 = new Nurse();
+            nurse2.setFirstName("Hemşire" + (i));
+            nurse2.setLastName("Soyadı");
+            nurse2.setTcKimlikNo("1234567890" + (i));
+            nurse2.setPhoneNumber("0532 123 45 67");
+            nurse2.setDepartmentId(i % 2 == 0 ? departmentId : departmentId2);
+            nurse2.setPassword(passwordEncoder.encode(defaultPassword));
+            nurse2.setRole(Role.NURSE);
+            nurse2.setGender(i % 2 == 0 ? "Erkek" : "Kadın");
+            nurse2.setBirthDate("09.06.1998");
+            nurses.add(nurse2);
+        }
         nurseRepository.saveAll(nurses);
 
     }

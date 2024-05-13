@@ -54,4 +54,10 @@ public interface NurseRepository extends JpaRepository<Nurse, String> {
                             "INNER JOIN departments " +
                             "ON nurses.department_id = departments.id WHERE departments.name= ?1")
     List<NurseDto> findAllNursesByDepartmentList(String department);
+    @Query(nativeQuery = true,
+            value = "SELECT nurses.* FROM nurses " +
+                    "INNER JOIN departments " +
+                    "ON nurses.department_id = departments.id WHERE departments.id= ?1")
+
+    List<Nurse> getNursesByDepartment(String departmentId);
 }

@@ -4,6 +4,7 @@ import com.example.nurseschedulingserver.dto.auth.AuthProjection;
 import com.example.nurseschedulingserver.dto.auth.AuthRequestDto;
 import com.example.nurseschedulingserver.dto.auth.AuthResponseDto;
 import com.example.nurseschedulingserver.dto.nurse.NurseDto;
+import com.example.nurseschedulingserver.entity.nurse.Nurse;
 import com.example.nurseschedulingserver.enums.Role;
 import com.example.nurseschedulingserver.repository.NurseRepository;
 import com.example.nurseschedulingserver.service.interfaces.NurseService;
@@ -78,5 +79,12 @@ public class NurseServiceImpl implements NurseService {
                         .getAuthentication()
                         .getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    @Override
+    public List<Nurse> getNursesByDepartment(String departmentId) {
+
+        return nurseRepository.getNursesByDepartment(departmentId);
+
     }
 }

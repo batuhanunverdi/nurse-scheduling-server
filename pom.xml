@@ -61,6 +61,11 @@
 			<artifactId>modelmapper</artifactId>
 			<version>2.4.4</version>
 		</dependency>
+		<dependency>
+			<groupId>com.google.ortools</groupId>
+			<artifactId>ortools-java</artifactId>
+			<version>9.9.3963</version>
+		</dependency>
 	</dependencies>
 
 	<build>

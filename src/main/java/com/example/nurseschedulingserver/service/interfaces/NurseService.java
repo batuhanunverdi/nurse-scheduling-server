@@ -4,6 +4,7 @@ import com.example.nurseschedulingserver.dto.auth.AuthProjection;
 import com.example.nurseschedulingserver.dto.auth.AuthRequestDto;
 import com.example.nurseschedulingserver.dto.auth.AuthResponseDto;
 import com.example.nurseschedulingserver.dto.nurse.NurseDto;
+import com.example.nurseschedulingserver.entity.nurse.Nurse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -20,4 +21,5 @@ public interface NurseService {
 
     AuthProjection getLoggedInUser();
 
+    List<Nurse> getNursesByDepartment(String departmentId);
 }
