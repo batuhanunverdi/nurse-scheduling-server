@@ -79,7 +79,7 @@ public class DataInjector implements CommandLineRunner {
 
         String defaultPassword = "Sanane5885";
 
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 12; i++) {
             Nurse nurse2 = new Nurse();
             nurse2.setFirstName("Hemşire" + (i));
             nurse2.setLastName("Soyadı");

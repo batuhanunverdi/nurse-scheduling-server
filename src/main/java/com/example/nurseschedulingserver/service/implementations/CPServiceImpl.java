@@ -59,31 +59,35 @@ public class CPServiceImpl implements CPService {
                         totalHoursWorked.addTerm(shifts[n][d][s], shiftDuration(s));
                     }
                 }
-                model.addGreaterOrEqual(totalHoursWorked.build(), 160);
+                model.addGreaterOrEqual(totalHoursWorked.build(), 168);
             }
 
-            // Vardiya 0 08:00 - 16:00 arası Vardiya 1 08:00 - 08:00 arası Vardiya 2 16:00 - 08:00 arası
-            // Her bir hemşire 1 günde en fazla 1 vardiya çalışabilir
-            for (int n : allNurses) {
-                for (int d : allDays) {
-                    LinearExprBuilder totalShiftsWorked = LinearExpr.newBuilder();
-                    for (int s : allShifts) {
-                        totalShiftsWorked.addTerm(shifts[n][d][s], 1);
-                    }
-                    model.addLessOrEqual(totalShiftsWorked.build(), 1);
-                }
-            }
-
-            // Her gün her vardiya dolu olmak zorunda
+            // Her gün vardiya 0 da en az 4 hemşire çalışmalı
             for (int d : allDays) {
-                for (int s : allShifts) {
-                    LinearExprBuilder totalNursesRequired = LinearExpr.newBuilder();
-                    for (int n : allNurses) {
-                        totalNursesRequired.addTerm(shifts[n][d][s], 1);
-                    }
-                    model.addEquality(totalNursesRequired.build(),1);
+                LinearExprBuilder totalNursesInShift0 = LinearExpr.newBuilder();
+                for (int n : allNurses) {
+                    totalNursesInShift0.addTerm(shifts[n][d][0], 1);
                 }
+                model.addGreaterOrEqual(totalNursesInShift0.build(), 4);
             }
+            // Her gün vardiya 1 da en az 2 hemşire çalışmalı
+
+            for (int d : allDays) {
+                LinearExprBuilder totalNursesInShift0 = LinearExpr.newBuilder();
+                for (int n : allNurses) {
+                    totalNursesInShift0.addTerm(shifts[n][d][1], 1);
+                }
+                model.addGreaterOrEqual(totalNursesInShift0.build(), 2);
+            }
+            // Her gün vardiya 2 da en az 1 hemşire çalışmalı
+            for (int d : allDays) {
+                LinearExprBuilder totalNursesInShift0 = LinearExpr.newBuilder();
+                for (int n : allNurses) {
+                    totalNursesInShift0.addTerm(shifts[n][d][2], 1);
+                }
+                model.addGreaterOrEqual(totalNursesInShift0.build(), 1);
+            }
+
 
             // Bir Hemşire Vardiya 1  çalışıyorsa ertesi gün hiç bir vardiyada çalışamaz. İzinlidir
             for (int n : allNurses) {
@@ -108,30 +112,8 @@ public class CPServiceImpl implements CPService {
                     }
                 }
             }
-//            for (int d : allDays) {
-//                LinearExprBuilder totalNursesInShift0 = LinearExpr.newBuilder();
-//                for (int n : allNurses) {
-//                    totalNursesInShift0.addTerm(shifts[n][d][0], 1);
-//                }
-//                model.addGreaterOrEqual(totalNursesInShift0.build(), 3);
-//                model.addLessOrEqual(totalNursesInShift0.build(), 4);
-//            }
-//
-//            for (int d : allDays) {
-//                LinearExprBuilder totalNursesInShift1 = LinearExpr.newBuilder();
-//                for (int n : allNurses) {
-//                    totalNursesInShift1.addTerm(shifts[n][d][1], 1);
-//                }
-//                model.addEquality(totalNursesInShift1.build(), 2);
-//            }
-//
-//            for (int d : allDays) {
-//                LinearExprBuilder totalNursesInShift2 = LinearExpr.newBuilder();
-//                for (int n : allNurses) {
-//                    totalNursesInShift2.addTerm(shifts[n][d][2], 1);
-//                }
-//                model.addEquality(totalNursesInShift2.build(), 2);
-//            }
+            //Eğer bir hemşire bir gün içerisinde bir vardiyada çalışıyorsa aynı gün içerisinde başka bir vardiyada çalışamaz
+
 
 
             CpSolver solver = new CpSolver();
@@ -176,7 +158,7 @@ public class CPServiceImpl implements CPService {
                 }
 
                 private int calculateStartHour(int shiftIndex) {
-                    int[] startHours = {8, 16, 20};
+                    int[] startHours = {8, 16, 8};
                     return startHours[shiftIndex];
                 }
 
