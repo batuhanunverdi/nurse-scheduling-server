@@ -36,10 +36,10 @@ public class DataInjector implements CommandLineRunner {
         injectDepartments();
         injectNurse();
         injectOffDays();
-        injectShifts();
-        injectExchangeShiftRequests();
+//        injectShifts();
         injectWorkDays();
         cpService.createShiftsByDepartment();
+        //injectExchangeShiftRequests();
     }
 
     public void injectDepartments() {
@@ -79,13 +79,13 @@ public class DataInjector implements CommandLineRunner {
 
         String defaultPassword = "Sanane5885";
 
-        for (int i = 0; i < 12; i++) {
+        for (int i = 0; i <8; i++) {
             Nurse nurse2 = new Nurse();
             nurse2.setFirstName("Hemşire" + (i));
             nurse2.setLastName("Soyadı");
             nurse2.setTcKimlikNo("1234567890" + (i));
             nurse2.setPhoneNumber("0532 123 45 67");
-            nurse2.setDepartmentId(i % 2 == 0 ? departmentId : departmentId2);
+            nurse2.setDepartmentId(departmentId);
             nurse2.setPassword(passwordEncoder.encode(defaultPassword));
             nurse2.setRole(Role.NURSE);
             nurse2.setGender(i % 2 == 0 ? "Erkek" : "Kadın");
@@ -197,14 +197,39 @@ public class DataInjector implements CommandLineRunner {
 
     public void injectWorkDays() throws ParseException {
         List<WorkDay> workDays = new ArrayList<>();
-        AuthProjection nurse = nurseRepository.findNurseByTcKimlikNo("37012561724").orElseThrow();
+        List<Nurse> nurses = nurseRepository.findAll();
 
         List<Date> dates = new ArrayList<>();
         List<String> stringDates = new ArrayList<>();
+        stringDates.add("01.06.2024");
+        stringDates.add("02.06.2024");
+        stringDates.add("03.06.2024");
+        stringDates.add("04.06.2024");
+        stringDates.add("05.06.2024");
+        stringDates.add("06.06.2024");
+        stringDates.add("07.06.2024");
         stringDates.add("08.06.2024");
         stringDates.add("09.06.2024");
         stringDates.add("10.06.2024");
         stringDates.add("11.06.2024");
+        stringDates.add("12.06.2024");
+        stringDates.add("13.06.2024");
+        stringDates.add("14.06.2024");
+        stringDates.add("15.06.2024");
+        stringDates.add("16.06.2024");
+        stringDates.add("17.06.2024");
+        stringDates.add("18.06.2024");
+        stringDates.add("19.06.2024");
+        stringDates.add("20.06.2024");
+        stringDates.add("21.06.2024");
+        stringDates.add("22.06.2024");
+        stringDates.add("23.06.2024");
+        stringDates.add("24.06.2024");
+        stringDates.add("25.06.2024");
+        stringDates.add("26.06.2024");
+        stringDates.add("27.06.2024");
+        stringDates.add("28.06.2024");
+        stringDates.add("29.06.2024");
         for (String stringDate : stringDates) {
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd.MM.yyyy");
             simpleDateFormat.setTimeZone(TimeZone.getTimeZone("Europe/Istanbul"));
@@ -212,10 +237,12 @@ public class DataInjector implements CommandLineRunner {
             dates.add(date);
         }
 
-        WorkDay workDay = new WorkDay();
-        workDay.setWorkDate(dates);
-        workDay.setNurseId(nurse.getId());
-        workDays.add(workDay);
+        for(Nurse nurse : nurses){
+            WorkDay workDay = new WorkDay();
+            workDay.setWorkDate(dates);
+            workDay.setNurseId(nurse.getId());
+            workDays.add(workDay);
+        }
         workDayRepository.saveAll(workDays);
     }
 }

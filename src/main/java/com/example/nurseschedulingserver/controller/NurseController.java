@@ -56,9 +56,9 @@ public class NurseController {
 
     @GetMapping("/{id}/shifts")
     public ResponseEntity<List<ShiftDto>> getShiftsByNurseId(
-            @PathVariable(value = "id") String id) {
+            @PathVariable(value = "id") String id,@RequestParam String month,@RequestParam String year) {
         try {
-            return new ResponseEntity<>(shiftService.getShiftsByNurseId(id), HttpStatus.OK);
+            return new ResponseEntity<>(shiftService.getShiftsByNurseId(id,month,year), HttpStatus.OK);
         } catch (Exception e) {
             e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);

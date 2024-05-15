@@ -40,9 +40,9 @@ public class ShiftController {
 
     @GetMapping
     @PreAuthorize("hasAuthority('CHARGE')")
-    public ResponseEntity<List<ShiftDto>> getShifts() {
+    public ResponseEntity<List<ShiftDto>> getShifts(@RequestParam(value = "month", required = false) String month, @RequestParam(value = "year", required = false) String year) {
         try {
-            return new ResponseEntity<>(shiftService.getShifts(), HttpStatus.OK);
+            return new ResponseEntity<>(shiftService.getShifts(month,year), HttpStatus.OK);
         } catch (Exception e) {
             e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);

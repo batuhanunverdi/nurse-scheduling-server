@@ -8,13 +8,13 @@ import com.example.nurseschedulingserver.entity.shift.Shift;
 import java.util.List;
 
 public interface ShiftService {
-    List<ShiftDto> getShiftsByNurseId(String nurseId);
+    List<ShiftDto> getShiftsByNurseId(String nurseId,String month,String year);
 
     ShiftDto getShiftById(String id);
 
     ExchangeShiftDto exchangeShifts(ExchangeShiftDto exchangeShiftDto);
 
-    List<ShiftDto> getShifts();
+    List<ShiftDto> getShifts(String month,String year);
 
     List<ShiftDto> getNotLoggedInUsersShiftsByDate(String date);
 
