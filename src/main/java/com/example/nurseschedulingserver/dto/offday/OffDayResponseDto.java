@@ -7,4 +7,5 @@ public interface OffDayResponseDto {
     String getNurseProfilePicture();
     String getNurseId();
     String getStatus();
+    String getGender();
 }

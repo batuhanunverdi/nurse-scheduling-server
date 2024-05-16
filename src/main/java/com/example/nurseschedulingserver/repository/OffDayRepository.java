@@ -14,7 +14,7 @@ public interface OffDayRepository extends JpaRepository<OffDay, String> {
     @Query(nativeQuery = true,
             value =
                     "SELECT off_days.id as id, off_days.date as date, nurses.first_name || ' ' || nurses.last_name as nurseName, " +
-                            "off_days.nurse_id as nurseId, off_days.status as status " +
+                            "off_days.nurse_id as nurseId, off_days.status as status, nurses.gender as gender " +
                             "FROM off_days " +
                             "INNER JOIN nurses " +
                             "ON off_days.nurse_id = nurses.id INNER JOIN departments d on nurses.department_id = d.id WHERE off_days.status = ?1 AND d.name=?2 ORDER BY off_days.date DESC")
