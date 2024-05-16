@@ -17,7 +17,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Configuration
@@ -36,10 +35,9 @@ public class DataInjector implements CommandLineRunner {
         injectDepartments();
         injectNurse();
         injectOffDays();
-//        injectShifts();
         injectWorkDays();
         cpService.createShiftsByDepartment();
-        //injectExchangeShiftRequests();
+        injectExchangeShiftRequests();
     }
 
     public void injectDepartments() {
@@ -186,11 +184,14 @@ public class DataInjector implements CommandLineRunner {
     }
     public void injectExchangeShiftRequests(){
     List<Shift> shifts = shiftRepository.findAll();
-    ExchangeShiftRequest exchangeShiftRequest = new ExchangeShiftRequest();
-    exchangeShiftRequest.setRequesterShiftId(shifts.get(0).getId());
-    exchangeShiftRequest.setRequestedShiftId(shifts.get(1).getId());
-    exchangeShiftRequest.setStatus(RequestStatus.PENDING);
-    exchangeShiftRequestRepository.save(exchangeShiftRequest);
+    if(shifts.size() < 2){
+        return;
+    }
+        ExchangeShiftRequest exchangeShiftRequest = new ExchangeShiftRequest();
+        exchangeShiftRequest.setRequesterShiftId(shifts.get(0).getId());
+        exchangeShiftRequest.setRequestedShiftId(shifts.get(1).getId());
+        exchangeShiftRequest.setStatus(RequestStatus.PENDING);
+        exchangeShiftRequestRepository.save(exchangeShiftRequest);
 
 
     }
@@ -199,50 +200,42 @@ public class DataInjector implements CommandLineRunner {
         List<WorkDay> workDays = new ArrayList<>();
         List<Nurse> nurses = nurseRepository.findAll();
 
-        List<Date> dates = new ArrayList<>();
-        List<String> stringDates = new ArrayList<>();
-        stringDates.add("01.06.2024");
-        stringDates.add("02.06.2024");
-        stringDates.add("03.06.2024");
-        stringDates.add("04.06.2024");
-        stringDates.add("05.06.2024");
-        stringDates.add("06.06.2024");
-        stringDates.add("07.06.2024");
-        stringDates.add("08.06.2024");
-        stringDates.add("09.06.2024");
-        stringDates.add("10.06.2024");
-        stringDates.add("11.06.2024");
-        stringDates.add("12.06.2024");
-        stringDates.add("13.06.2024");
-        stringDates.add("14.06.2024");
-        stringDates.add("15.06.2024");
-        stringDates.add("16.06.2024");
-        stringDates.add("17.06.2024");
-        stringDates.add("18.06.2024");
-        stringDates.add("19.06.2024");
-        stringDates.add("20.06.2024");
-        stringDates.add("21.06.2024");
-        stringDates.add("22.06.2024");
-        stringDates.add("23.06.2024");
-        stringDates.add("24.06.2024");
-        stringDates.add("25.06.2024");
-        stringDates.add("26.06.2024");
-        stringDates.add("27.06.2024");
-        stringDates.add("28.06.2024");
-        stringDates.add("29.06.2024");
-        for (String stringDate : stringDates) {
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd.MM.yyyy");
-            simpleDateFormat.setTimeZone(TimeZone.getTimeZone("Europe/Istanbul"));
-            Date date = simpleDateFormat.parse(stringDate);
-            dates.add(date);
+        // Haziran ayının tüm günlerini oluştur
+        List<Date> allDaysInJune = new ArrayList<>();
+        Calendar calendar = Calendar.getInstance();
+        //Get year and month from the date
+
+        calendar.set(2024, Calendar.JUNE, 1);
+        int daysInJune = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
+        for (int day = 1; day <= daysInJune; day++) {
+            calendar.set(Calendar.DAY_OF_MONTH, day);
+            allDaysInJune.add(calendar.getTime());
         }
 
-        for(Nurse nurse : nurses){
+        Random random = new Random();
+        for (Nurse nurse : nurses) {
+            Set<Date> selectedDates = new HashSet<>();
+            while (selectedDates.size() < 25) {
+                int randomIndex = random.nextInt(allDaysInJune.size());
+                selectedDates.add(allDaysInJune.get(randomIndex));
+            }
             WorkDay workDay = new WorkDay();
-            workDay.setWorkDate(dates);
+            List<Date> datesWithMidnight = new ArrayList<>();
+            for (Date date : selectedDates) {
+                calendar.setTime(date);
+                calendar.set(Calendar.HOUR_OF_DAY, 0);
+                calendar.set(Calendar.MINUTE, 0);
+                calendar.set(Calendar.SECOND, 0);
+                calendar.set(Calendar.MILLISECOND, 0);
+                datesWithMidnight.add(calendar.getTime());
+            }
+            workDay.setWorkDate(datesWithMidnight);
             workDay.setNurseId(nurse.getId());
             workDays.add(workDay);
         }
+
         workDayRepository.saveAll(workDays);
     }
+
+
 }
