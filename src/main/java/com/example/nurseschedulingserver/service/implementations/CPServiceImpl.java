@@ -184,16 +184,22 @@ public class CPServiceImpl implements CPService {
                             for (int n : allNurses) {
                                 Nurse nurse = nurseList.get(n);
                                     if (shifts[n][d][s] != null && booleanValue(shifts[n][d][s])) {
+                                        int shiftDuration = shiftDuration(s);
                                         int startHour = calculateStartHour(s);
-                                        int endHour = (startHour + shiftDuration(s))%24;
+                                        int endHour = (startHour +shiftDuration )%24;
                                         System.out.printf("    Nurse %d (%s): %02d:00 - %02d:00%n", n, nurse.getFirstName() , startHour, endHour);
                                         Shift shift = new Shift();
                                         shift.setNurseId(nurse.getId());
                                         Calendar calendar = Calendar.getInstance();
                                         LocalDate date = LocalDate.now();
-                                        calendar.set(date.getYear(),date.getMonthValue(),d+1,startHour,0);
+                                        calendar.set(date.getYear(),date.getMonthValue(),d+1,startHour,0,0);
                                         shift.setStartDate(calendar.getTime());
-                                        calendar.set(date.getYear(),date.getMonthValue(),d+1,endHour,0);
+                                        if(shiftDuration == 8){
+                                            calendar.set(date.getYear(),date.getMonthValue(),d+1,endHour,0,0);
+                                        }
+                                        else{
+                                            calendar.set(date.getYear(),date.getMonthValue(),d+2,endHour,0,0);
+                                        }
                                         shift.setEndDate(calendar.getTime());
                                         shiftList.add(shift);
                                     }

@@ -215,7 +215,7 @@ public class DataInjector implements CommandLineRunner {
         Random random = new Random();
         for (Nurse nurse : nurses) {
             Set<Date> selectedDates = new HashSet<>();
-            while (selectedDates.size() < 25) {
+            while (selectedDates.size() < 26) {
                 int randomIndex = random.nextInt(allDaysInJune.size());
                 selectedDates.add(allDaysInJune.get(randomIndex));
             }
