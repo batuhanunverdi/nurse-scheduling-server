@@ -1,6 +1,7 @@
 package com.example.nurseschedulingserver.configuration;
 
 import com.example.nurseschedulingserver.dto.auth.AuthProjection;
+import com.example.nurseschedulingserver.entity.constraint.Constraint;
 import com.example.nurseschedulingserver.entity.department.Department;
 import com.example.nurseschedulingserver.entity.nurse.Nurse;
 import com.example.nurseschedulingserver.entity.offday.OffDay;
@@ -11,6 +12,7 @@ import com.example.nurseschedulingserver.enums.RequestStatus;
 import com.example.nurseschedulingserver.enums.Role;
 import com.example.nurseschedulingserver.repository.*;
 import com.example.nurseschedulingserver.service.interfaces.CPService;
+import com.example.nurseschedulingserver.service.interfaces.NurseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
@@ -30,16 +32,25 @@ public class DataInjector implements CommandLineRunner {
     private final ExchangeShiftRequestRepository exchangeShiftRequestRepository;
     private final WorkDayRepository workDayRepository;
     private final CPService cpService;
+    private final NurseService nurseService;
     @Override
     public void run(String... args) throws ParseException {
         injectDepartments();
         injectNurse();
         injectOffDays();
         injectWorkDays();
-        cpService.createShiftsByDepartment();
+        injectCP();
         injectExchangeShiftRequests();
     }
-
+    public void injectCP(){
+        List<Integer> minimumNursesForEachShift = new ArrayList<>(Arrays.asList(3,2,2));
+        Department department = departmentRepository.findByName("Acil Servis").orElseThrow();
+        List<Nurse> nurses = nurseService.getNursesByDepartment(department.getId());
+        Constraint constraint = new Constraint();
+        constraint.setDepartmentId(department.getId());
+        constraint.setMinimumNursesForEachShift(minimumNursesForEachShift);
+        cpService.createShifts(nurses,constraint);
+    }
     public void injectDepartments() {
         List<String> departments = List.of(
                 "Yara Bakım Birimi",
