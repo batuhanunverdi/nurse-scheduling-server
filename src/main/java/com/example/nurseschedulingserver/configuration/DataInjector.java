@@ -211,10 +211,8 @@ public class DataInjector implements CommandLineRunner {
         List<WorkDay> workDays = new ArrayList<>();
         List<Nurse> nurses = nurseRepository.findAll();
 
-        // Haziran ayının tüm günlerini oluştur
         List<Date> allDaysInJune = new ArrayList<>();
         Calendar calendar = Calendar.getInstance();
-        //Get year and month from the date
 
         calendar.set(2024, Calendar.JUNE, 1);
         int daysInJune = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);

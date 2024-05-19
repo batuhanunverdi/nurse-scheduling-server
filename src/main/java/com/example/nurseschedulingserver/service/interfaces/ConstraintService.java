@@ -1,14 +1,15 @@
 package com.example.nurseschedulingserver.service.interfaces;
 
+import com.example.nurseschedulingserver.dto.constraint.ConstraintResponseDto;
 import com.example.nurseschedulingserver.entity.constraint.Constraint;
 
 import java.util.List;
 
 public interface ConstraintService {
 
-    String createConstraint(String departmentId, List<Integer> minimumNursesForEachShift);
+    ConstraintResponseDto createConstraint(String departmentId, List<Integer> minimumNursesForEachShift) throws Exception;
 
-    String updateConstraintByDepartmentId(String departmentId, List<Integer> minimumNursesForEachShift);
+    ConstraintResponseDto updateConstraintByDepartmentId(String departmentId, List<Integer> minimumNursesForEachShift) throws Exception;
 
     Constraint getConstraintByDepartmentId(String departmentId);
 

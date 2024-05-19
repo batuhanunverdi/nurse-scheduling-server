@@ -22,4 +22,5 @@ public interface NurseService {
     AuthProjection getLoggedInUser();
 
     List<Nurse> getNursesByDepartment(String departmentId);
+
 }
