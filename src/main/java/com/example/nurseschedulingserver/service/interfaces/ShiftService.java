@@ -24,4 +24,6 @@ public interface ShiftService {
 
     Shift saveShift(Shift shift);
     List<ShiftDto> getShiftsByMonthAndYear(String id,String month, String year);
+
+    List<Shift> saveAll(List<Shift> shifts);
 }

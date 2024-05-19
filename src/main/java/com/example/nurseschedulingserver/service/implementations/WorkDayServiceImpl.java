@@ -52,5 +52,10 @@ public class WorkDayServiceImpl implements WorkDayService {
         return new WorkDayResponseDto(workDays.getId(),workDays.getWorkDate(),workDays.getNurseId(),"");
     }
 
+    @Override
+    public WorkDay findWorkDayByNurseId(String id,int month,int year) {
+        return workDayRepository.findAllByNurseIdAndDate(id,month,year);
+    }
+
 
 }

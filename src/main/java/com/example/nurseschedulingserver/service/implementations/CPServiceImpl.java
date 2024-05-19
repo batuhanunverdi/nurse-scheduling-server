@@ -1,15 +1,16 @@
 package com.example.nurseschedulingserver.service.implementations;
 
 import com.example.nurseschedulingserver.entity.constraint.Constraint;
+import com.example.nurseschedulingserver.entity.department.Department;
 import com.example.nurseschedulingserver.entity.nurse.Nurse;
 import com.example.nurseschedulingserver.entity.shift.Shift;
 import com.example.nurseschedulingserver.entity.workday.WorkDay;
-import com.example.nurseschedulingserver.repository.ShiftRepository;
-import com.example.nurseschedulingserver.repository.WorkDayRepository;
-import com.example.nurseschedulingserver.service.interfaces.CPService;
+import com.example.nurseschedulingserver.repository.ConstraintRepository;
+import com.example.nurseschedulingserver.service.interfaces.*;
 import com.google.ortools.Loader;
 import com.google.ortools.sat.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.DayOfWeek;
@@ -17,18 +18,29 @@ import java.time.LocalDate;
 import java.time.Month;
 import java.time.ZoneId;
 import java.time.temporal.ChronoField;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.IntStream;
 
 @Service
 @RequiredArgsConstructor
 public class CPServiceImpl implements CPService {
-    private final ShiftRepository shiftRepository;
-    private final WorkDayRepository workDayRepository;
+    private final DepartmentService departmentService;
+    private final NurseService nurseService;
+    private final WorkDayService workDayService;
+    private final ConstraintRepository constraintRepository;
+    private final ShiftService shiftService;
 
+    @Scheduled(cron = "0 27 12 19 * ?", zone = "Europe/Istanbul")
+    private void executeConstraint(){
+        List<Department> departments = departmentService.getAllDepartments();
+        for (Department department : departments) {
+            Optional<Constraint> constraint = constraintRepository.findByDepartmentId(department.getId());
+            List<Nurse> nurses = nurseService.getNursesByDepartment(department.getId());
+            constraint.ifPresent(value -> createShifts(nurses, value));
+        }
+    }
+
+    @Override
     public void createShifts(List<Nurse> nurseList, Constraint constraint) {
         Loader.loadNativeLibraries();
         LocalDate nextDate = LocalDate.now().plusMonths(1);
@@ -97,7 +109,7 @@ public class CPServiceImpl implements CPService {
                         }
                     }
                 }
-                shiftRepository.saveAll(shiftList);
+                shiftService.saveAll(shiftList);
                 solutionCount++;
                 if (solutionCount >= solutionLimit) {
                     System.out.printf("Stop search after %d solutions%n", solutionLimit);
@@ -144,7 +156,7 @@ public class CPServiceImpl implements CPService {
         return day == DayOfWeek.SUNDAY || day == DayOfWeek.SATURDAY;
     }
     private WorkDay getWorkDayForNurse(Nurse nurse, LocalDate date) {
-        return workDayRepository.findAllByNurseIdAndDate(nurse.getId(), date.getMonthValue(), date.getYear());
+        return workDayService.findWorkDayByNurseId(nurse.getId(), date.getMonthValue(),date.getYear());
     }
     private Date getDate(LocalDate date, int day) {
         return Date.from(date.withDayOfMonth(day + 1).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());

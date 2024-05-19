@@ -1,7 +1,6 @@
 package com.example.nurseschedulingserver.configuration;
 
 import com.example.nurseschedulingserver.dto.auth.AuthProjection;
-import com.example.nurseschedulingserver.entity.constraint.Constraint;
 import com.example.nurseschedulingserver.entity.department.Department;
 import com.example.nurseschedulingserver.entity.nurse.Nurse;
 import com.example.nurseschedulingserver.entity.offday.OffDay;
@@ -11,8 +10,7 @@ import com.example.nurseschedulingserver.entity.workday.WorkDay;
 import com.example.nurseschedulingserver.enums.RequestStatus;
 import com.example.nurseschedulingserver.enums.Role;
 import com.example.nurseschedulingserver.repository.*;
-import com.example.nurseschedulingserver.service.interfaces.CPService;
-import com.example.nurseschedulingserver.service.interfaces.NurseService;
+import com.example.nurseschedulingserver.service.interfaces.ConstraintService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
@@ -31,25 +29,22 @@ public class DataInjector implements CommandLineRunner {
     private final ShiftRepository shiftRepository;
     private final ExchangeShiftRequestRepository exchangeShiftRequestRepository;
     private final WorkDayRepository workDayRepository;
-    private final CPService cpService;
-    private final NurseService nurseService;
+    private final ConstraintService constraintService;
+
     @Override
-    public void run(String... args) throws ParseException {
+    public void run(String... args) throws Exception {
         injectDepartments();
         injectNurse();
-        injectOffDays();
+        //injectOffDays();
         injectWorkDays();
-        injectCP();
+        injectConstraints();
         injectExchangeShiftRequests();
     }
-    public void injectCP(){
-        List<Integer> minimumNursesForEachShift = new ArrayList<>(Arrays.asList(3,2,2));
-        Department department = departmentRepository.findByName("Acil Servis").orElseThrow();
-        List<Nurse> nurses = nurseService.getNursesByDepartment(department.getId());
-        Constraint constraint = new Constraint();
-        constraint.setDepartmentId(department.getId());
-        constraint.setMinimumNursesForEachShift(minimumNursesForEachShift);
-        cpService.createShifts(nurses,constraint);
+    public void injectConstraints() throws Exception {
+        List<Department> departments = departmentRepository.findAll();
+        for (Department department : departments) {
+            constraintService.createConstraint(department.getName(),new ArrayList<>(Arrays.asList(3,2,2)));
+        }
     }
     public void injectDepartments() {
         List<String> departments = List.of(
@@ -71,47 +66,49 @@ public class DataInjector implements CommandLineRunner {
         }
     }
     public void injectNurse(){
-        String departmentId = departmentRepository.findByName("Acil Servis").orElseThrow().getId();
-        String departmentId2 = departmentRepository.findByName("Yoğun Bakım Ünitesi").orElseThrow().getId();
-        List<Nurse> nurses = nurseRepository.findAll();
+        List<Department> departments = departmentRepository.findAll();
+        List<Nurse> nurses = new ArrayList<>();
         Nurse nurse = new Nurse();
         nurse.setFirstName("Mert Batuhan");
         nurse.setLastName("Ünverdi");
         nurse.setTcKimlikNo("37012561724");
         nurse.setPhoneNumber("0532 123 45 67");
-        nurse.setDepartmentId(departmentId);
+        nurse.setDepartmentId(departments.get(1).getId());
         nurse.setPassword(passwordEncoder.encode("Sanane5885"));
         nurse.setRole(Role.CHARGE);
         nurse.setGender("Erkek");
         nurse.setBirthDate("09.06.1998");
         nurses.add(nurse);
 
-        String defaultPassword = "Sanane5885";
-
-        for (int i = 0; i <8; i++) {
-            Nurse nurse2 = new Nurse();
-            nurse2.setFirstName("Hemşire" + (i));
-            nurse2.setLastName("Soyadı");
-            nurse2.setTcKimlikNo("1234567890" + (i));
-            nurse2.setPhoneNumber("0532 123 45 67");
-            nurse2.setDepartmentId(departmentId);
-            nurse2.setPassword(passwordEncoder.encode(defaultPassword));
-            nurse2.setRole(Role.NURSE);
-            nurse2.setGender(i % 2 == 0 ? "Erkek" : "Kadın");
-            nurse2.setBirthDate("09.06.1998");
-            nurses.add(nurse2);
+        for (Department department : departments) {
+            String departmentId = department.getId();
+            String defaultPassword = "Sanane5885";
+            Random random = new Random();
+            for (int i = 0; i <11; i++) {
+                long randomNumber = (long) (random.nextDouble() * 1_000_000_000_00L);
+                String tcKimlikNo = String.valueOf(randomNumber);
+                Nurse nurse2 = new Nurse();
+                nurse2.setFirstName(department.getName() + (i));
+                nurse2.setLastName("");
+                nurse2.setTcKimlikNo(tcKimlikNo);
+                nurse2.setPhoneNumber("0532 123 45 67");
+                nurse2.setDepartmentId(departmentId);
+                nurse2.setPassword(passwordEncoder.encode(defaultPassword));
+                nurse2.setRole(Role.NURSE);
+                nurse2.setGender(i%2==0 ? "Erkek" : "Kadın");
+                nurse2.setBirthDate("09.06.1998");
+                nurses.add(nurse2);
+            }
         }
         nurseRepository.saveAll(nurses);
+
+
 
     }
     public void injectOffDays(){
         List<AuthProjection> authProjections = new ArrayList<>();
         AuthProjection nurse = nurseRepository.findNurseByTcKimlikNo("37012561724").orElseThrow();
-        AuthProjection nurse2 = nurseRepository.findNurseByTcKimlikNo("12345678901").orElseThrow();
-        AuthProjection nurse3 = nurseRepository.findNurseByTcKimlikNo("12345678902").orElseThrow();
         authProjections.add(nurse);
-        authProjections.add(nurse2);
-        authProjections.add(nurse3);
         List<String> dates = new ArrayList<>();
         dates.add("08.04.2024");
         dates.add("09.04.2024");

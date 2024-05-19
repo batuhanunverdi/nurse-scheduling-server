@@ -78,6 +78,11 @@ public class ShiftServiceImpl implements ShiftService {
         return shiftRepository.findShiftsByNurseIdAndMonthAndYearAndDepartmentName(nurse.getId(), monthInt,yearInt,nurse.getDepartmentName());
     }
 
+    @Override
+    public List<Shift> saveAll(List<Shift> shifts) {
+        return shiftRepository.saveAll(shifts);
+    }
+
     public List<ShiftDto> getNotLoggedInUsersShiftsByDate(String date) {
         AuthProjection user = nurseService.getLoggedInUser();
         return shiftRepository.findAllShiftsByDate(date, user.getId(),user.getDepartmentName());

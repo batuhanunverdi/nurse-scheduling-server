@@ -2,6 +2,7 @@ package com.example.nurseschedulingserver.service.interfaces;
 
 import com.example.nurseschedulingserver.dto.workday.WorkDayRequestDto;
 import com.example.nurseschedulingserver.dto.workday.WorkDayResponseDto;
+import com.example.nurseschedulingserver.entity.workday.WorkDay;
 
 
 public interface WorkDayService {
@@ -9,4 +10,6 @@ public interface WorkDayService {
 
 
     WorkDayResponseDto getWorkDays(String month, String year);
+
+    WorkDay findWorkDayByNurseId(String id, int month, int year);
 }
