@@ -5,6 +5,7 @@ import com.example.nurseschedulingserver.dto.workday.WorkDayResponseDto;
 import com.example.nurseschedulingserver.entity.workday.WorkDay;
 
 import java.util.Date;
+import java.util.List;
 
 
 public interface WorkDayService {
@@ -13,7 +14,7 @@ public interface WorkDayService {
 
     WorkDayResponseDto getWorkDays(String month, String year);
 
-    WorkDay findWorkDayByNurseId(String id, int month, int year);
+    boolean checkWorkDayExistsByDateAndNurseId(Date date,String nurseId);
 
-    boolean checkWorkDayExistsByDate(Date date);
+    List<WorkDay> findWorkDayByMonthAndYear(int month, int year);
 }

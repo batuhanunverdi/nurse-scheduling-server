@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -20,5 +21,11 @@ public interface WorkDayRepository extends JpaRepository<WorkDay, String>{
     WorkDay findAllByNurseIdAndDate(String id,int month,int year);
 
 
-    boolean existsAllByWorkDateContaining(Date date);
+    boolean existsAllByWorkDateContainingAndNurseId(Date date, String nurseId);
+
+    @Query(
+            value = "SELECT * FROM work_days INNER JOIN work_day_work_date wdwd on work_days.id = wdwd.work_day_id WHERE EXTRACT(MONTH FROM work_date) = ?1 AND EXTRACT(YEAR FROM work_date) = ?2 ",
+            nativeQuery = true
+    )
+    List<WorkDay> findAllByMonthAndYear(int month, int year);
 }

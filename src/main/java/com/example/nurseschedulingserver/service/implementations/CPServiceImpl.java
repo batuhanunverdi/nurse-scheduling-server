@@ -51,12 +51,25 @@ public class CPServiceImpl implements CPService {
         final int[] allDays = IntStream.range(0, nextMonthDays).toArray();
         final int[] allShifts = IntStream.range(0, 3).toArray();
         final int solutionLimit = 1;
+        List<WorkDay> workDays = getWorkDayByMonthAndDate(nextDate);
+        HashMap<Nurse,List<String>> existsWorKDaysForEachNurse = new HashMap<>();
+        for (int i = 0; i <nextMonthDays ; i++) {
+            List<String> workDayList = new ArrayList<>();
+            for (Nurse nurse : nurseList) {
+                existsWorKDaysForEachNurse.put(nurse,workDayList);
+                Date date = convertDate(nextDate,i);
+                boolean exists = checkWorkDateExists(date,nurse.getId());
+                if(exists) {
+                    workDayList.add(date.toString());
+                }
+            }
+        }
 
         CpModel model = new CpModel();
-        Literal[][][] shifts = createShiftVariables(nurseList,allNurses, allDays, allShifts, nextDate,model);
-        implementConsecutiveShifts(nurseList,allNurses,allDays,shifts,model,nextDate,constraint);
-        implementMinimumWorkingHours(allNurses,allDays,allShifts,shifts,nurseList,nextDate,model);
-        implementNotWorkingShifts(nurseList,allNurses,allDays,allShifts,shifts,model,nextDate);
+        Literal[][][] shifts = createShiftVariables(nurseList,allNurses, allDays, allShifts, nextDate,model,workDays,existsWorKDaysForEachNurse);
+        implementConsecutiveShifts(nurseList,allNurses,allDays,shifts,model,nextDate,constraint,workDays,existsWorKDaysForEachNurse);
+        implementMinimumWorkingHours(allNurses,allDays,allShifts,shifts,nurseList,nextDate,model,workDays,existsWorKDaysForEachNurse);
+        implementNotWorkingShifts(nurseList,allNurses,allDays,allShifts,shifts,model,nextDate,workDays,existsWorKDaysForEachNurse);
 
         CpSolver solver = new CpSolver();
         solver.getParameters().setLinearizationLevel(0);
@@ -158,13 +171,13 @@ public class CPServiceImpl implements CPService {
         DayOfWeek day = DayOfWeek.of(ld.get(ChronoField.DAY_OF_WEEK));
         return day == DayOfWeek.SUNDAY || day == DayOfWeek.SATURDAY;
     }
-    private WorkDay getWorkDayForNurse(Nurse nurse, LocalDate date) {
-        return workDayService.findWorkDayByNurseId(nurse.getId(), date.getMonthValue(),date.getYear());
+    private List<WorkDay> getWorkDayByMonthAndDate(LocalDate date) {
+        return workDayService.findWorkDayByMonthAndYear(date.getMonthValue(),date.getYear());
     }
-    private boolean checkWorkDateExists(Date date){
-        return workDayService.checkWorkDayExistsByDate(date);
+    private boolean checkWorkDateExists(Date date, String nurseId){
+        return workDayService.checkWorkDayExistsByDateAndNurseId(date,nurseId);
     }
-    private Date getDate(LocalDate date, int day) {
+    private Date convertDate(LocalDate date, int day) {
         return Date.from(date.withDayOfMonth(day + 1).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
     }
     private int getMinimumWorkingHours(int year, Month month){
@@ -180,14 +193,15 @@ public class CPServiceImpl implements CPService {
         return count;
     }
 
-    private Literal[][][] createShiftVariables(List<Nurse> nurseList,int[] allNurses, int[] allDays, int[] allShifts, LocalDate shiftDate,CpModel model) {
+    private Literal[][][] createShiftVariables(List<Nurse> nurseList,int[] allNurses, int[] allDays, int[] allShifts,
+                                               LocalDate shiftDate,CpModel model,List<WorkDay> workDays,HashMap<Nurse,List<String>> existsWorKDaysForEachNurse) {
         Literal[][][] shifts = new Literal[allNurses.length][allDays.length][allShifts.length];
         for (int n : allNurses) {
             Nurse nurse = nurseList.get(n);
-            WorkDay workDay = getWorkDayForNurse(nurse, shiftDate);
+            WorkDay workDay = workDays.stream().filter(w -> Objects.equals(w.getNurseId(), nurse.getId())).findFirst().orElse(null);
             for (int d : allDays) {
-                Date date = getDate(shiftDate, d);
-                boolean checkWorkDay = checkWorkDateExists(date);
+                Date date = convertDate(shiftDate, d);
+                boolean checkWorkDay = existsWorKDaysForEachNurse.get(nurse).contains(date.toString());
                 for (int s : allShifts) {
                     if (workDay == null || workDay.getWorkDate().contains(date) || !checkWorkDay ) {
                         shifts[n][d][s] = model.newBoolVar("shifts_n" + n + "d" + d + "s" + s);
@@ -200,16 +214,15 @@ public class CPServiceImpl implements CPService {
 
     private void implementMinimumWorkingHours(int[] allNurses, int[] allDays, int[] allShifts,
                                               Literal[][][] shifts, List<Nurse> nurseList,
-                                              LocalDate shiftDate, CpModel model){
+                                              LocalDate shiftDate, CpModel model, List<WorkDay> workDays,HashMap<Nurse,List<String>> existsWorKDaysForEachNurse){
         int minimumWorkingHours = getMinimumWorkingHours(shiftDate.getYear(),shiftDate.getMonth());
         for (int n : allNurses) {
             LinearExprBuilder totalHoursWorked = LinearExpr.newBuilder();
             Nurse nurse = nurseList.get(n);
-            WorkDay workDay = getWorkDayForNurse(nurse, shiftDate);
-
+            WorkDay workDay = workDays.stream().filter(w -> Objects.equals(w.getNurseId(), nurse.getId())).findFirst().orElse(null);
             for (int d : allDays) {
-                Date date = getDate(shiftDate, d);
-                boolean checkWorkDay = checkWorkDateExists(date);
+                Date date = convertDate(shiftDate, d);
+                boolean checkWorkDay = existsWorKDaysForEachNurse.get(nurse).contains(date.toString());
                 for (int s : allShifts) {
                     if (workDay == null || workDay.getWorkDate().contains(date) || !checkWorkDay) {
                         totalHoursWorked.addTerm(shifts[n][d][s], shiftDuration(s));
@@ -221,7 +234,7 @@ public class CPServiceImpl implements CPService {
     }
 
     private void implementConsecutiveShifts(List<Nurse> nurseList, int[] allNurses, int[] allDays,
-                                            Literal[][][] shifts, CpModel model, LocalDate shiftDate, Constraint constraint) {
+                                            Literal[][][] shifts, CpModel model, LocalDate shiftDate, Constraint constraint, List<WorkDay> workDays,HashMap<Nurse,List<String>> existsWorKDaysForEachNurse) {
         List<Integer> minimumNursesNeeded = constraint.getMinimumNursesForEachShift();
 
         for (int d : allDays) {
@@ -233,9 +246,9 @@ public class CPServiceImpl implements CPService {
             }
             for (int n : allNurses) {
                 Nurse nurse = nurseList.get(n);
-                WorkDay workDay = getWorkDayForNurse(nurse, shiftDate);
-                Date workDate = getDate(shiftDate, d);
-                boolean checkWorkDay = checkWorkDateExists(workDate);
+                WorkDay workDay = workDays.stream().filter(w -> Objects.equals(w.getNurseId(), nurse.getId())).findFirst().orElse(null);
+                Date workDate = convertDate(shiftDate, d);
+                boolean checkWorkDay = existsWorKDaysForEachNurse.get(nurse).contains(date.toString());
                 if (workDay == null || (workDay.getWorkDate().contains(workDate)) || !checkWorkDay) {
                     if (!isWeekend(date)) {
                         for (int s = 0; s < 3 - 1; s++) {
@@ -260,14 +273,13 @@ public class CPServiceImpl implements CPService {
         }
     }
     private void implementNotWorkingShifts(List<Nurse> nurseList, int[] allNurses, int[] allDays, int[] allShifts,
-                                           Literal[][][] shifts, CpModel model, LocalDate shiftDate) {
+                                           Literal[][][] shifts, CpModel model, LocalDate shiftDate, List<WorkDay> workDays,HashMap<Nurse,List<String>> existsWorKDaysForEachNurse) {
         for (int n : allNurses) {
             Nurse nurse = nurseList.get(n);
-            WorkDay workDay = getWorkDayForNurse(nurse, shiftDate);
-
+            WorkDay workDay = workDays.stream().filter(w -> Objects.equals(w.getNurseId(), nurse.getId())).findFirst().orElse(null);
             for (int d = 0; d < allDays.length; d++) {
-                Date date = getDate(shiftDate, d);
-                boolean checkWorkDay = checkWorkDateExists(date);
+                Date date = convertDate(shiftDate, d);
+                boolean checkWorkDay = existsWorKDaysForEachNurse.get(nurse).contains(date.toString());
                 if (workDay == null || workDay.getWorkDate().contains(date) ||!checkWorkDay) {
                     for (int s = 0; s < allShifts.length; s++) {
                         if (shifts[n][d][s] != null) {

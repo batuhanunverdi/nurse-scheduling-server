@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 
@@ -53,14 +54,15 @@ public class WorkDayServiceImpl implements WorkDayService {
         return new WorkDayResponseDto(workDays.getId(),workDays.getWorkDate(),workDays.getNurseId(),"");
     }
 
+
     @Override
-    public WorkDay findWorkDayByNurseId(String id,int month,int year) {
-        return workDayRepository.findAllByNurseIdAndDate(id,month,year);
+    public boolean checkWorkDayExistsByDateAndNurseId(Date date,String nurseId) {
+        return workDayRepository.existsAllByWorkDateContainingAndNurseId(date,nurseId);
     }
 
     @Override
-    public boolean checkWorkDayExistsByDate(Date date) {
-        return workDayRepository.existsAllByWorkDateContaining(date);
+    public List<WorkDay> findWorkDayByMonthAndYear(int month, int year) {
+        return workDayRepository.findAllByMonthAndYear(month,year);
     }
 
 
