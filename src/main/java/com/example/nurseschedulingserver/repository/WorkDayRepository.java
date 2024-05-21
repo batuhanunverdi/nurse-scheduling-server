@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
 import java.util.Optional;
 
 @Repository
@@ -19,4 +20,5 @@ public interface WorkDayRepository extends JpaRepository<WorkDay, String>{
     WorkDay findAllByNurseIdAndDate(String id,int month,int year);
 
 
+    boolean existsAllByWorkDateContaining(Date date);
 }

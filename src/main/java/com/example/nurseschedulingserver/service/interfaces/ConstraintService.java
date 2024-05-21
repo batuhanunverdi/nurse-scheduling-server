@@ -11,6 +11,6 @@ public interface ConstraintService {
 
     ConstraintResponseDto updateConstraintByDepartmentId(String departmentId, List<Integer> minimumNursesForEachShift) throws Exception;
 
-    Constraint getConstraintByDepartmentId(String departmentId);
+    Constraint getConstraintByDepartmentName(String departmentId);
 
 }

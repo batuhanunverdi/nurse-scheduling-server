@@ -1,6 +1,7 @@
 package com.example.nurseschedulingserver.configuration;
 
 import com.example.nurseschedulingserver.dto.auth.AuthProjection;
+import com.example.nurseschedulingserver.entity.constraint.Constraint;
 import com.example.nurseschedulingserver.entity.department.Department;
 import com.example.nurseschedulingserver.entity.nurse.Nurse;
 import com.example.nurseschedulingserver.entity.offday.OffDay;
@@ -10,13 +11,13 @@ import com.example.nurseschedulingserver.entity.workday.WorkDay;
 import com.example.nurseschedulingserver.enums.RequestStatus;
 import com.example.nurseschedulingserver.enums.Role;
 import com.example.nurseschedulingserver.repository.*;
+import com.example.nurseschedulingserver.service.interfaces.CPService;
 import com.example.nurseschedulingserver.service.interfaces.ConstraintService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.text.ParseException;
 import java.util.*;
 
 @Configuration
@@ -30,6 +31,7 @@ public class DataInjector implements CommandLineRunner {
     private final ExchangeShiftRequestRepository exchangeShiftRequestRepository;
     private final WorkDayRepository workDayRepository;
     private final ConstraintService constraintService;
+    private final CPService cpService;
 
     @Override
     public void run(String... args) throws Exception {
@@ -43,8 +45,17 @@ public class DataInjector implements CommandLineRunner {
     public void injectConstraints() throws Exception {
         List<Department> departments = departmentRepository.findAll();
         for (Department department : departments) {
-            constraintService.createConstraint(department.getName(),new ArrayList<>(Arrays.asList(3,2,2)));
+            constraintService.createConstraint(department.getName(),new ArrayList<>(Arrays.asList(3,3,3)));
         }
+        testConstraints();
+    }
+
+    public void testConstraints() {
+        Optional<Department> department = departmentRepository.findByName("Acil Servis");
+        Constraint constraint = constraintService.getConstraintByDepartmentName(department.get().getName());
+        List<Nurse> nurses = nurseRepository.getNursesByDepartment(department.get().getId());
+        cpService.createShifts(nurses,constraint);
+
     }
     public void injectDepartments() {
         List<String> departments = List.of(
@@ -84,7 +95,7 @@ public class DataInjector implements CommandLineRunner {
             String departmentId = department.getId();
             String defaultPassword = "Sanane5885";
             Random random = new Random();
-            for (int i = 0; i <11; i++) {
+            for (int i = 0; i <12; i++) {
                 long randomNumber = (long) (random.nextDouble() * 1_000_000_000_00L);
                 String tcKimlikNo = String.valueOf(randomNumber);
                 Nurse nurse2 = new Nurse();
@@ -101,9 +112,6 @@ public class DataInjector implements CommandLineRunner {
             }
         }
         nurseRepository.saveAll(nurses);
-
-
-
     }
     public void injectOffDays(){
         List<AuthProjection> authProjections = new ArrayList<>();
@@ -204,7 +212,7 @@ public class DataInjector implements CommandLineRunner {
 
     }
 
-    public void injectWorkDays() throws ParseException {
+    public void injectWorkDays() {
         List<WorkDay> workDays = new ArrayList<>();
         List<Nurse> nurses = nurseRepository.findAll();
 
@@ -221,9 +229,12 @@ public class DataInjector implements CommandLineRunner {
         Random random = new Random();
         for (Nurse nurse : nurses) {
             Set<Date> selectedDates = new HashSet<>();
-            while (selectedDates.size() < 26) {
-                int randomIndex = random.nextInt(allDaysInJune.size());
-                selectedDates.add(allDaysInJune.get(randomIndex));
+//            while (selectedDates.size() < daysInJune-4) {
+//                int randomIndex = random.nextInt(allDaysInJune.size());
+//                selectedDates.add(allDaysInJune.get(randomIndex));
+//            }
+            for (int i = 0; i <daysInJune-4; i++) {
+                selectedDates.add(allDaysInJune.get(i));
             }
             WorkDay workDay = new WorkDay();
             List<Date> datesWithMidnight = new ArrayList<>();

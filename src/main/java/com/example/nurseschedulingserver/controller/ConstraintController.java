@@ -20,7 +20,7 @@ public class ConstraintController {
     @PreAuthorize("hasAuthority('CHARGE')")
     @GetMapping
     public ResponseEntity<Constraint> getConstraint(@RequestParam(value = "department") String department) {
-        return new ResponseEntity<>(constraintService.getConstraintByDepartmentId(department), HttpStatus.OK);
+        return new ResponseEntity<>(constraintService.getConstraintByDepartmentName(department), HttpStatus.OK);
     }
     @PostMapping
     @PreAuthorize("hasAuthority('CHARGE')")

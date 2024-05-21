@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Optional;
 
 
@@ -55,6 +56,11 @@ public class WorkDayServiceImpl implements WorkDayService {
     @Override
     public WorkDay findWorkDayByNurseId(String id,int month,int year) {
         return workDayRepository.findAllByNurseIdAndDate(id,month,year);
+    }
+
+    @Override
+    public boolean checkWorkDayExistsByDate(Date date) {
+        return workDayRepository.existsAllByWorkDateContaining(date);
     }
 
 

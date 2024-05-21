@@ -42,6 +42,7 @@ public class CPServiceImpl implements CPService {
 
     @Override
     public void createShifts(List<Nurse> nurseList, Constraint constraint) {
+        long startTime = System.currentTimeMillis();
         Loader.loadNativeLibraries();
         LocalDate nextDate = LocalDate.now().plusMonths(1);
         int nextMonthDays = nextDate.lengthOfMonth();
@@ -131,8 +132,10 @@ public class CPServiceImpl implements CPService {
 
         VarArraySolutionPrinterWithLimit cb = new VarArraySolutionPrinterWithLimit(nurseList, allNurses, allDays, allShifts, shifts, solutionLimit);
 
-
+        System.out.println("Solving model");
         CpSolverStatus status = solver.solve(model, cb);
+        long endTime = System.currentTimeMillis();
+        System.out.println("Execution time: " + (endTime - startTime) + " ms");
         System.out.println("Status: " + status);
         System.out.println(cb.getSolutionCount() + " solutions found.");
 
@@ -158,6 +161,9 @@ public class CPServiceImpl implements CPService {
     private WorkDay getWorkDayForNurse(Nurse nurse, LocalDate date) {
         return workDayService.findWorkDayByNurseId(nurse.getId(), date.getMonthValue(),date.getYear());
     }
+    private boolean checkWorkDateExists(Date date){
+        return workDayService.checkWorkDayExistsByDate(date);
+    }
     private Date getDate(LocalDate date, int day) {
         return Date.from(date.withDayOfMonth(day + 1).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
     }
@@ -181,8 +187,9 @@ public class CPServiceImpl implements CPService {
             WorkDay workDay = getWorkDayForNurse(nurse, shiftDate);
             for (int d : allDays) {
                 Date date = getDate(shiftDate, d);
+                boolean checkWorkDay = checkWorkDateExists(date);
                 for (int s : allShifts) {
-                    if (workDay == null || workDay.getWorkDate().contains(date)) {
+                    if (workDay == null || workDay.getWorkDate().contains(date) || !checkWorkDay ) {
                         shifts[n][d][s] = model.newBoolVar("shifts_n" + n + "d" + d + "s" + s);
                     }
                 }
@@ -202,8 +209,9 @@ public class CPServiceImpl implements CPService {
 
             for (int d : allDays) {
                 Date date = getDate(shiftDate, d);
+                boolean checkWorkDay = checkWorkDateExists(date);
                 for (int s : allShifts) {
-                    if (workDay == null || workDay.getWorkDate().contains(date)) {
+                    if (workDay == null || workDay.getWorkDate().contains(date) || !checkWorkDay) {
                         totalHoursWorked.addTerm(shifts[n][d][s], shiftDuration(s));
                     }
                 }
@@ -227,7 +235,8 @@ public class CPServiceImpl implements CPService {
                 Nurse nurse = nurseList.get(n);
                 WorkDay workDay = getWorkDayForNurse(nurse, shiftDate);
                 Date workDate = getDate(shiftDate, d);
-                if (workDay == null || (workDay.getWorkDate().contains(workDate))) {
+                boolean checkWorkDay = checkWorkDateExists(workDate);
+                if (workDay == null || (workDay.getWorkDate().contains(workDate)) || !checkWorkDay) {
                     if (!isWeekend(date)) {
                         for (int s = 0; s < 3 - 1; s++) {
                             totalNursesInShifts.get(s).addTerm(shifts[n][d][s], 1);
@@ -255,9 +264,11 @@ public class CPServiceImpl implements CPService {
         for (int n : allNurses) {
             Nurse nurse = nurseList.get(n);
             WorkDay workDay = getWorkDayForNurse(nurse, shiftDate);
+
             for (int d = 0; d < allDays.length; d++) {
                 Date date = getDate(shiftDate, d);
-                if (workDay == null || workDay.getWorkDate().contains(date)) {
+                boolean checkWorkDay = checkWorkDateExists(date);
+                if (workDay == null || workDay.getWorkDate().contains(date) ||!checkWorkDay) {
                     for (int s = 0; s < allShifts.length; s++) {
                         if (shifts[n][d][s] != null) {
                             for (int otherS = s + 1; otherS < allShifts.length; otherS++) {
@@ -291,6 +302,4 @@ public class CPServiceImpl implements CPService {
             }
         }
     }
-
-
 }

@@ -26,8 +26,12 @@ public class ConstraintServiceImpl implements ConstraintService {
         try {
             Department department = validateDepartment(departmentName);
             validateNurseAvailability(department, minimumNursesForEachShift);
-
-            Constraint existingConstraint = getConstraintByDepartmentId(departmentName);
+            List<Nurse> nurseList = nurseService.getNursesByDepartment(department.getId());
+            int count = calculateNurseCount(minimumNursesForEachShift, nurseList.size());
+            if(count != -1){
+                throw new Exception("Bu Departmanda Çalışan Hemşire Sayısı Yetersiz. Gereken Hemşire Sayısı: " + count + " Ancak Mevcut Hemşire Sayısı: " + nurseList.size());
+            }
+            Constraint existingConstraint = getConstraintByDepartmentName(departmentName);
             if (existingConstraint != null) {
                 return updateConstraintByDepartmentId(departmentName, minimumNursesForEachShift);
             }
@@ -49,7 +53,7 @@ public class ConstraintServiceImpl implements ConstraintService {
             Department department = validateDepartment(departmentName);
             validateNurseAvailability(department, minimumNursesForEachShift);
 
-            Constraint constraint = getConstraintByDepartmentId(departmentName);
+            Constraint constraint = getConstraintByDepartmentName(departmentName);
             if (constraint == null) {
                 throw new Exception("Bu Departmana ait Kısıtlamalar Bulunamadı");
             }
@@ -65,7 +69,7 @@ public class ConstraintServiceImpl implements ConstraintService {
     }
 
     @Override
-    public Constraint getConstraintByDepartmentId(String departmentName) {
+    public Constraint getConstraintByDepartmentName(String departmentName) {
         Department department = departmentService.getDepartmentByName(departmentName);
         if (department == null) {
             return null;
@@ -88,5 +92,17 @@ public class ConstraintServiceImpl implements ConstraintService {
         if (totalCount > nurses.size()) {
             throw new Exception("Bu Departmanda Yeterli Hemşire Yok. Bu Departmandaki Hemşire Sayısı :"+ nurses.size() + " Kısıtlamaların Toplamı : " + totalCount);
         }
+    }
+
+    private int calculateNurseCount(List<Integer> minimumNurseList,int checkCount){
+        int dayShift = minimumNurseList.get(0);
+        int nightShift = minimumNurseList.get(1);
+        int fullShift = minimumNurseList.get(2);
+        int nurseCount = dayShift + nightShift +fullShift*2;
+        if(nurseCount <= checkCount){
+            return -1;
+        }
+        return nurseCount;
+
     }
 }
