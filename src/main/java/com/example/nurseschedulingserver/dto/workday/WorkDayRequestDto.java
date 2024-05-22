@@ -15,4 +15,6 @@ import java.util.List;
 @AllArgsConstructor
 public class WorkDayRequestDto {
     private List<Date> workDate;
+    private String month;
+    private String year;
 }

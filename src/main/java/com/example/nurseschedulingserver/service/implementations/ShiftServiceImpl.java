@@ -202,5 +202,10 @@ public class ShiftServiceImpl implements ShiftService {
         return shiftRepository.findAllShiftsByDate(date, user.getId(),user.getDepartmentName());
     }
 
+    @Override
+    public List<ShiftDto> getShiftsByDepartmentAndDate(String departmentId,int month,int year ,int days) {
+        return shiftRepository.findShiftsByDepartmentNameAndDate(departmentId,month,year, days);
+    }
+
 
 }

@@ -34,7 +34,7 @@ public class DataInjector implements CommandLineRunner {
     public void run(String... args) throws Exception {
 //        injectDepartments();
 //        injectNurse();
-        //injectOffDays();
+//        injectOffDays();
 //        injectWorkDays();
 //        injectConstraints();
 //        injectExchangeShiftRequests();
@@ -210,7 +210,7 @@ public class DataInjector implements CommandLineRunner {
         List<Date> allDaysInJune = new ArrayList<>();
         Calendar calendar = Calendar.getInstance();
 
-        calendar.set(2024, Calendar.JUNE, 1);
+        calendar.set(2024, Calendar.JULY, 1);
         int daysInJune = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
         for (int day = 1; day <= daysInJune; day++) {
             calendar.set(Calendar.DAY_OF_MONTH, day);

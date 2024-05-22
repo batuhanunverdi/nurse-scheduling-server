@@ -27,4 +27,5 @@ public interface ShiftService {
     List<Shift> saveAll(List<Shift> shifts);
 
     List<ShiftDto> getAvailableShiftsByShiftId(String shiftId,String nurseId, String month, String year);
+    List<ShiftDto> getShiftsByDepartmentAndDate(String departmentName,int month,int year ,int days);
 }

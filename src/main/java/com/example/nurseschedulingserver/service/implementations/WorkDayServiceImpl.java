@@ -24,7 +24,9 @@ public class WorkDayServiceImpl implements WorkDayService {
     @Override
     public WorkDayResponseDto saveWorkDays(WorkDayRequestDto workDays) {
         AuthProjection user = nurseService.getLoggedInUser();
-        Optional<WorkDay> loggedInUserWorkDay = workDayRepository.findByNurseId(user.getId());
+        int monthInt = Integer.parseInt(workDays.getMonth());
+        int yearInt = Integer.parseInt(workDays.getYear());
+        Optional<WorkDay> loggedInUserWorkDay = workDayRepository.findByNurseIdAndMonthAndYear(user.getId(),monthInt,yearInt);
         WorkDay workDay = new WorkDay();
         String message;
         if (loggedInUserWorkDay.isPresent()) {

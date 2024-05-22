@@ -19,6 +19,7 @@ public class WorkDayController {
             return new ResponseEntity<>(workDayService.saveWorkDays(workDayList), HttpStatus.OK);
         }
         catch (Exception e){
+            e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }

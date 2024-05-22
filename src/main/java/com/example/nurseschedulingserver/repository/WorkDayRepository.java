@@ -12,7 +12,6 @@ import java.util.Optional;
 @Repository
 public interface WorkDayRepository extends JpaRepository<WorkDay, String>{
 
-    Optional<WorkDay> findByNurseId(String id);
 
     @Query(
             value = "SELECT * FROM work_days INNER JOIN work_day_work_date wdwd on work_days.id = wdwd.work_day_id WHERE nurse_id = ?1 AND EXTRACT(MONTH FROM work_date) = ?2 AND EXTRACT(YEAR FROM work_date) = ?3 ",
@@ -28,4 +27,11 @@ public interface WorkDayRepository extends JpaRepository<WorkDay, String>{
             nativeQuery = true
     )
     List<WorkDay> findAllByMonthAndYear(int month, int year);
+
+
+    @Query(
+            value = "SELECT * FROM work_days INNER JOIN work_day_work_date wdwd on work_days.id = wdwd.work_day_id WHERE nurse_id = ?1 AND EXTRACT(MONTH FROM work_date) = ?2 AND EXTRACT(YEAR FROM work_date) = ?3 ",
+            nativeQuery = true
+    )
+    Optional<WorkDay> findByNurseIdAndMonthAndYear(String id,int month,int year);
 }
