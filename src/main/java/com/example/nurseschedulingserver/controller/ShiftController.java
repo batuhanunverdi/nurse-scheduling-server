@@ -78,5 +78,16 @@ public class ShiftController {
         }
     }
 
+    @GetMapping("/{shiftId}/{nurseId}")
+    public ResponseEntity<List<ShiftDto>> getAvailableShifts(@PathVariable(name = "shiftId") String shiftId, @PathVariable(name = "nurseId") String nurseId,
+                                                             @RequestParam(value="month") String month, @RequestParam(value="year") String year) {
+        try {
+            return new ResponseEntity<>(shiftService.getAvailableShiftsByShiftId(shiftId,nurseId,month,year), HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
+
 
 }

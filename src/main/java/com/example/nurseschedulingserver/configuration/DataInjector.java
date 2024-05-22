@@ -32,17 +32,17 @@ public class DataInjector implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        injectDepartments();
-        injectNurse();
+//        injectDepartments();
+//        injectNurse();
         //injectOffDays();
-        injectWorkDays();
-        injectConstraints();
-        injectExchangeShiftRequests();
+//        injectWorkDays();
+//        injectConstraints();
+//        injectExchangeShiftRequests();
     }
     public void injectConstraints() throws Exception {
         List<Department> departments = departmentRepository.findAll();
         for (Department department : departments) {
-            constraintService.createConstraint(department.getName(),new ArrayList<>(Arrays.asList(3,2,2)));
+            constraintService.createConstraint(department.getName(),new ArrayList<>(Arrays.asList(4,2,2)));
         }
     }
     public void injectDepartments() {
@@ -83,7 +83,10 @@ public class DataInjector implements CommandLineRunner {
             String departmentId = department.getId();
             String defaultPassword = "Sanane5885";
             Random random = new Random();
-            for (int i = 0; i <9; i++) {
+            for (int i = 0; i <12; i++) {
+                if(i==0 && department.getName().equals("Acil Servis")){
+                    continue;
+                }
                 long randomNumber = (long) (random.nextDouble() * 1_000_000_000_00L);
                 String tcKimlikNo = String.valueOf(randomNumber);
                 Nurse nurse2 = new Nurse();
@@ -217,7 +220,7 @@ public class DataInjector implements CommandLineRunner {
         Random random = new Random();
         for (Nurse nurse : nurses) {
             Set<Date> selectedDates = new HashSet<>();
-            while (selectedDates.size() < daysInJune-4) {
+            while (selectedDates.size() < daysInJune-3) {
                 int randomIndex = random.nextInt(allDaysInJune.size());
                 if(!selectedDates.contains(allDaysInJune.get(randomIndex))){
                     selectedDates.add(allDaysInJune.get(randomIndex));

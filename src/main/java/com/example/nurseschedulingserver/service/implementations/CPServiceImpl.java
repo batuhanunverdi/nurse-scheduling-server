@@ -30,7 +30,7 @@ public class CPServiceImpl implements CPService {
     private final ConstraintRepository constraintRepository;
     private final ShiftService shiftService;
 
-    @Scheduled(cron = "0 27 12 19 * ?", zone = "Europe/Istanbul")
+    @Scheduled(cron = "0 00 12 22 * ?", zone = "Europe/Istanbul")
     private void executeConstraint(){
         List<Department> departments = departmentService.getAllDepartments();
         for (Department department : departments) {
@@ -40,8 +40,7 @@ public class CPServiceImpl implements CPService {
         }
     }
 
-    @Override
-    public void createShifts(List<Nurse> nurseList, Constraint constraint) {
+    private void createShifts(List<Nurse> nurseList, Constraint constraint) {
         long startTime = System.currentTimeMillis();
         Loader.loadNativeLibraries();
         LocalDate nextDate = LocalDate.now().plusMonths(1);
@@ -234,44 +233,55 @@ public class CPServiceImpl implements CPService {
     }
 
     private void implementConsecutiveShifts(List<Nurse> nurseList, int[] allNurses, int[] allDays,
-                                            Literal[][][] shifts, CpModel model, LocalDate shiftDate, Constraint constraint, List<WorkDay> workDays,HashMap<Nurse,List<String>> existsWorKDaysForEachNurse) {
+                                            Literal[][][] shifts, CpModel model, LocalDate shiftDate, Constraint constraint,
+                                            List<WorkDay> workDays, HashMap<Nurse, List<String>> existsWorKDaysForEachNurse) {
         List<Integer> minimumNursesNeeded = constraint.getMinimumNursesForEachShift();
+        int totalShifts = 3;
 
         for (int d : allDays) {
             LocalDate date = shiftDate.withDayOfMonth(d + 1);
             boolean isWeekend = isWeekend(date);
-            List<LinearExprBuilder> totalNursesInShifts = new ArrayList<>();
-            for (int s = 0; s < 3; s++) {
+            List<LinearExprBuilder> totalNursesInShifts = new ArrayList<>(totalShifts);
+
+            for (int s = 0; s < totalShifts; s++) {
                 totalNursesInShifts.add(LinearExpr.newBuilder());
             }
+
             for (int n : allNurses) {
                 Nurse nurse = nurseList.get(n);
                 WorkDay workDay = workDays.stream().filter(w -> Objects.equals(w.getNurseId(), nurse.getId())).findFirst().orElse(null);
                 Date workDate = convertDate(shiftDate, d);
-                boolean checkWorkDay = existsWorKDaysForEachNurse.get(nurse).contains(date.toString());
+                boolean checkWorkDay = existsWorKDaysForEachNurse.get(nurse).contains(workDate.toString());
+
                 if (workDay == null || (workDay.getWorkDate().contains(workDate)) || !checkWorkDay) {
-                    if (!isWeekend(date)) {
-                        for (int s = 0; s < 3 - 1; s++) {
+                    if (!isWeekend) {
+                        for (int s = 0; s < totalShifts - 1; s++) {
                             totalNursesInShifts.get(s).addTerm(shifts[n][d][s], 1);
                         }
-                        model.addEquality(shifts[n][d][3 - 1], 0);
+                        model.addEquality(shifts[n][d][totalShifts - 1], 0);
                     } else {
-                        totalNursesInShifts.get(3 - 1).addTerm(shifts[n][d][3 - 1], 1);
-                        for (int s = 0; s < 3 - 1; s++) {
+                        totalNursesInShifts.get(totalShifts - 1).addTerm(shifts[n][d][totalShifts - 1], 1);
+                        for (int s = 0; s < totalShifts - 1; s++) {
                             model.addEquality(shifts[n][d][s], 0);
                         }
                     }
                 }
             }
+
             if (!isWeekend) {
-                for (int s = 0; s < 3 - 1; s++) {
-                    model.addGreaterOrEqual(totalNursesInShifts.get(s).build(), minimumNursesNeeded.get(s));
+                for (int s = 0; s < totalShifts - 1; s++) {
+                    if(s == 0) {
+                        model.addGreaterOrEqual(totalNursesInShifts.get(s).build(), minimumNursesNeeded.get(s));
+                    }else {
+                        model.addEquality(totalNursesInShifts.get(s).build(), minimumNursesNeeded.get(s));
+                    }
                 }
             } else {
-                model.addEquality(totalNursesInShifts.get(3 - 1).build(), minimumNursesNeeded.get(3 - 1));
+                model.addEquality(totalNursesInShifts.get(totalShifts - 1).build(), minimumNursesNeeded.get(totalShifts - 1));
             }
         }
     }
+
     private void implementNotWorkingShifts(List<Nurse> nurseList, int[] allNurses, int[] allDays, int[] allShifts,
                                            Literal[][][] shifts, CpModel model, LocalDate shiftDate, List<WorkDay> workDays,HashMap<Nurse,List<String>> existsWorKDaysForEachNurse) {
         for (int n : allNurses) {
