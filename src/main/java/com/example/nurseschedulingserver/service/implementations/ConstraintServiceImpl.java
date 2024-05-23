@@ -27,9 +27,9 @@ public class ConstraintServiceImpl implements ConstraintService {
             Department department = validateDepartment(departmentName);
             validateNurseAvailability(department, minimumNursesForEachShift);
             List<Nurse> nurseList = nurseService.getNursesByDepartment(department.getId());
-            int count = calculateNurseCount(minimumNursesForEachShift, nurseList.size());
+            int count = calculateNurseCount(minimumNursesForEachShift, nurseList.size()-1);
             if(count != -1){
-                throw new Exception("Bu Departmanda Çalışan Hemşire Sayısı Yetersiz. Gereken Hemşire Sayısı: " + count + " Ancak Mevcut Hemşire Sayısı: " + nurseList.size());
+                throw new Exception("Bu Departmanda Çalışan Hemşire Sayısı Yetersiz. Gereken Hemşire Sayısı: " + count + " Ancak Mevcut Hemşire Sayısı: " + (nurseList.size()-1));
             }
             Constraint existingConstraint = getConstraintByDepartmentName(departmentName);
             if (existingConstraint != null) {

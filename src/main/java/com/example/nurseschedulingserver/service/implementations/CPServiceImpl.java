@@ -1,10 +1,12 @@
 package com.example.nurseschedulingserver.service.implementations;
 
+import com.example.nurseschedulingserver.dto.shift.ShiftDto;
 import com.example.nurseschedulingserver.entity.constraint.Constraint;
 import com.example.nurseschedulingserver.entity.department.Department;
 import com.example.nurseschedulingserver.entity.nurse.Nurse;
 import com.example.nurseschedulingserver.entity.shift.Shift;
 import com.example.nurseschedulingserver.entity.workday.WorkDay;
+import com.example.nurseschedulingserver.enums.Role;
 import com.example.nurseschedulingserver.repository.ConstraintRepository;
 import com.example.nurseschedulingserver.service.interfaces.*;
 import com.google.ortools.Loader;
@@ -30,20 +32,56 @@ public class CPServiceImpl implements CPService {
     private final ConstraintRepository constraintRepository;
     private final ShiftService shiftService;
 
-    @Scheduled(cron = "30 49 13 23 * ?", zone = "Europe/Istanbul")
-    private void executeConstraint(){
+    @Scheduled(cron = "20 24 17 23 * ?", zone = "Europe/Istanbul")
+    public void executeConstraint(){
         List<Department> departments = departmentService.getAllDepartments();
         for (Department department : departments) {
             Optional<Constraint> constraint = constraintRepository.findByDepartmentId(department.getId());
             List<Nurse> nurses = nurseService.getNursesByDepartment(department.getId());
-            constraint.ifPresent(value -> createShifts(nurses, value));
+            Optional<Nurse> chargeNurse = nurses.stream()
+                    .filter(nurse -> nurse.getRole().equals(Role.CHARGE))
+                    .findFirst();
+            for (int i = 0; i <3 ; i++) {
+                int finalI = i;
+                constraint.ifPresent(value -> createShifts(nurses, value, finalI));
+                createShiftForChargeNurse(chargeNurse.get(),finalI);
+            }
         }
     }
+    private void createShiftForChargeNurse(Nurse nurse,int x){
+        LocalDate currentDate = LocalDate.now().plusMonths(x);
+        LocalDate nextDate = currentDate.plusMonths(1);
+        int nextMonthDays = nextDate.lengthOfMonth();
+        List<Shift> shifts = new ArrayList<>();
+        for (int i = 0; i < nextMonthDays; i++) {
+         Date date = convertDate(nextDate, i);
+         LocalDate localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+         if(!isWeekend(localDate)){
+             Shift shift = new Shift();
+             shift.setNurseId(nurse.getId());
+             Calendar calendar = Calendar.getInstance();
+             LocalDate innerDate = LocalDate.now();
+             calendar.set(innerDate.getYear(), innerDate.getMonthValue()+x, i + 1, 8, 0, 0);
+             shift.setStartDate(calendar.getTime());
+             calendar.set(innerDate.getYear(), innerDate.getMonthValue()+x, i + 1, 16, 0, 0);
+             shift.setEndDate(calendar.getTime());
+             shifts.add(shift);
+         }
+        }
+        shiftService.saveAll(shifts);
 
-    private void createShifts(List<Nurse> nurseList, Constraint constraint) {
+    }
+
+    private void createShifts(List<Nurse> nurseList, Constraint constraint,int x) {
+        nurseList.removeIf(nurse -> nurse.getRole().equals(Role.CHARGE));
         long startTime = System.currentTimeMillis();
         Loader.loadNativeLibraries();
-        LocalDate nextDate = LocalDate.now().plusMonths(1);
+        LocalDate currentDate = LocalDate.now().plusMonths(x);
+        int lastDay = currentDate.lengthOfMonth();
+        int secondLastDay = currentDate.lengthOfMonth()-1;
+        List<ShiftDto> lastDayShifts = shiftService.getShiftsByDepartmentAndDate(constraint.getDepartmentId(),currentDate.getMonthValue(),currentDate.getYear(),lastDay);
+        List<ShiftDto> secondLastDayShifts = shiftService.getShiftsByDepartmentAndDate(constraint.getDepartmentId(),currentDate.getMonthValue(),currentDate.getYear(),secondLastDay);
+        LocalDate nextDate = currentDate.plusMonths(1);
         int nextMonthDays = nextDate.lengthOfMonth();
         final int numNurses = nurseList.size();
         final int[] allNurses = IntStream.range(0, numNurses).toArray();
@@ -65,10 +103,10 @@ public class CPServiceImpl implements CPService {
         }
 
         CpModel model = new CpModel();
-        Literal[][][] shifts = createShiftVariables(nurseList,allNurses, allDays, allShifts, nextDate,model,workDays,workDaysForNurses,constraint);
-        implementConsecutiveShifts(nurseList,allNurses,allDays,shifts,model,nextDate,constraint,workDays,workDaysForNurses);
-        implementMinimumWorkingHours(allNurses,allDays,allShifts,shifts,nurseList,nextDate,model,workDays,workDaysForNurses,constraint);
-        implementNotWorkingShifts(nurseList,allNurses,allDays,allShifts,shifts,model,nextDate,workDays,workDaysForNurses,constraint);
+        Literal[][][] shifts = createShiftVariables(nurseList,allNurses, allDays, allShifts, nextDate,model,workDays,workDaysForNurses,constraint,lastDayShifts,secondLastDayShifts);
+        implementConsecutiveShifts(nurseList,allNurses,allDays,shifts,model,nextDate,constraint,workDays,workDaysForNurses,lastDayShifts,secondLastDayShifts);
+        implementMinimumWorkingHours(allNurses,allDays,allShifts,shifts,nurseList,nextDate,model,workDays,workDaysForNurses,constraint,lastDayShifts,secondLastDayShifts);
+        implementNotWorkingShifts(nurseList,allNurses,allDays,allShifts,shifts,model,nextDate,workDays,workDaysForNurses,constraint,lastDayShifts,secondLastDayShifts);
 
         CpSolver solver = new CpSolver();
         solver.getParameters().setLinearizationLevel(0);
@@ -109,12 +147,12 @@ public class CPServiceImpl implements CPService {
                                 shift.setNurseId(nurse.getId());
                                 Calendar calendar = Calendar.getInstance();
                                 LocalDate date = LocalDate.now();
-                                calendar.set(date.getYear(), date.getMonthValue(), d + 1, startHour, 0, 0);
+                                calendar.set(date.getYear(), date.getMonthValue()+x, d + 1, startHour, 0, 0);
                                 shift.setStartDate(calendar.getTime());
                                 if (shiftDuration == 8) {
-                                    calendar.set(date.getYear(), date.getMonthValue(), d + 1, endHour, 0, 0);
+                                    calendar.set(date.getYear(), date.getMonthValue()+x, d + 1, endHour, 0, 0);
                                 } else {
-                                    calendar.set(date.getYear(), date.getMonthValue(), d + 2, endHour, 0, 0);
+                                    calendar.set(date.getYear(), date.getMonthValue()+x, d + 2, endHour, 0, 0);
                                 }
                                 shift.setEndDate(calendar.getTime());
                                 shiftList.add(shift);
@@ -122,12 +160,12 @@ public class CPServiceImpl implements CPService {
                         }
                     }
                 }
-                shiftService.saveAll(shiftList);
                 solutionCount++;
                 if (solutionCount >= solutionLimit) {
                     System.out.printf("Stop search after %d solutions%n", solutionLimit);
                     stopSearch();
                 }
+                shiftService.saveAll(shiftList);
             }
 
             public int getSolutionCount() {
@@ -203,21 +241,37 @@ public class CPServiceImpl implements CPService {
         }
         return count;
     }
+    private boolean checkPreviousMonthLastDay(List<ShiftDto> shiftDtos, Nurse nurse) {
+        return shiftDtos.stream().anyMatch(shiftDto ->
+                shiftDto.getNurseId().equals(nurse.getId()) && getShiftDurationHours(shiftDto) >= 16);
+    }
+
+    private boolean checkPreviousMonthSecondLastDay(List<ShiftDto> shiftDtos, Nurse nurse) {
+        return shiftDtos.stream().anyMatch(shiftDto ->
+                shiftDto.getNurseId().equals(nurse.getId()) && getShiftDurationHours(shiftDto) == 24);
+    }
+
+    private int getShiftDurationHours(ShiftDto shiftDto) {
+        long durationMillis = shiftDto.getEndDate().getTime() - shiftDto.getStartDate().getTime();
+        return (int) (durationMillis / (60 * 60 * 1000));
+    }
+
 
     private Literal[][][] createShiftVariables(List<Nurse> nurseList,int[] allNurses, int[] allDays, int[] allShifts,
                                                LocalDate shiftDate,CpModel model,List<WorkDay> workDays,
                                                HashMap<String, List<Nurse>> existsWorKDaysForEachNurse,
-                                               Constraint constraint) {
+                                               Constraint constraint,List<ShiftDto> lastDayShifts,List<ShiftDto> secondLastDayShifts) {
         Literal[][][] shifts = new Literal[allNurses.length][allDays.length][allShifts.length];
         for (int n : allNurses) {
             Nurse nurse = nurseList.get(n);
             WorkDay workDay = workDays.stream().filter(w -> Objects.equals(w.getNurseId(), nurse.getId())).findFirst().orElse(null);
             for (int d : allDays) {
+                boolean previousMonthLastTwoDayShift = checkPreviousShifts(lastDayShifts, secondLastDayShifts, nurse, d);
                 Date date = convertDate(shiftDate, d);
                 List<Nurse> nurses = existsWorKDaysForEachNurse.get(date.toString());
                 boolean checkWorkDay = checkWorkDayByListSize(nurses,date,constraint);
                 for (int s : allShifts) {
-                    if (workDay == null || workDay.getWorkDate().contains(date) || checkWorkDay ) {
+                    if ((workDay == null || workDay.getWorkDate().contains(date) || checkWorkDay ) && !previousMonthLastTwoDayShift) {
                         shifts[n][d][s] = model.newBoolVar("shifts_n" + n + "d" + d + "s" + s);
                     }
                 }
@@ -226,11 +280,25 @@ public class CPServiceImpl implements CPService {
         return shifts;
     }
 
+    private boolean checkPreviousShifts(List<ShiftDto> lastDayShifts, List<ShiftDto> secondLastDayShifts, Nurse nurse, int d) {
+        boolean previousMonthLastTwoDayShift = false;
+        if(d==0){
+            previousMonthLastTwoDayShift = checkPreviousMonthSecondLastDay(secondLastDayShifts,nurse);
+            if(!previousMonthLastTwoDayShift){
+                previousMonthLastTwoDayShift = checkPreviousMonthLastDay(lastDayShifts,nurse);
+            }
+        }
+        else if(d==1){
+            previousMonthLastTwoDayShift = checkPreviousMonthSecondLastDay(lastDayShifts,nurse);
+        }
+        return previousMonthLastTwoDayShift;
+    }
+
     private void implementMinimumWorkingHours(int[] allNurses, int[] allDays, int[] allShifts,
                                               Literal[][][] shifts, List<Nurse> nurseList,
                                               LocalDate shiftDate, CpModel model, List<WorkDay> workDays,
                                               HashMap<String, List<Nurse>> existsWorKDaysForEachNurse,
-                                              Constraint constraint) {
+                                              Constraint constraint,List<ShiftDto> lastDayShifts,List<ShiftDto> secondLastDayShifts ) {
         int minimumWorkingHours = getMinimumWorkingHours(shiftDate.getYear(),shiftDate.getMonth());
         for (int n : allNurses) {
             LinearExprBuilder totalHoursWorked = LinearExpr.newBuilder();
@@ -239,9 +307,10 @@ public class CPServiceImpl implements CPService {
             for (int d : allDays) {
                 Date date = convertDate(shiftDate, d);
                 List<Nurse> nurses = existsWorKDaysForEachNurse.get(date.toString());
+                boolean previousMonthLastTwoDayShift = checkPreviousShifts(lastDayShifts, secondLastDayShifts, nurse, d);
                 boolean checkWorkDay = checkWorkDayByListSize(nurses,date,constraint);
                 for (int s : allShifts) {
-                    if (workDay == null || workDay.getWorkDate().contains(date) || checkWorkDay) {
+                    if ((workDay == null || workDay.getWorkDate().contains(date) || checkWorkDay ) && !previousMonthLastTwoDayShift) {
                         totalHoursWorked.addTerm(shifts[n][d][s], shiftDuration(s));
                     }
                 }
@@ -252,8 +321,10 @@ public class CPServiceImpl implements CPService {
 
     private void implementConsecutiveShifts(List<Nurse> nurseList, int[] allNurses, int[] allDays,
                                             Literal[][][] shifts, CpModel model, LocalDate shiftDate, Constraint constraint,
-                                            List<WorkDay> workDays, HashMap<String, List<Nurse>> existsWorKDaysForEachNurse) {
+                                            List<WorkDay> workDays, HashMap<String, List<Nurse>> existsWorKDaysForEachNurse,
+                                            List<ShiftDto> lastDayShifts,List<ShiftDto> secondLastDayShifts) {
         List<Integer> minimumNursesNeeded = constraint.getMinimumNursesForEachShift();
+        minimumNursesNeeded.set(0,minimumNursesNeeded.get(0)-1);
         int totalShifts = 3;
 
         for (int d : allDays) {
@@ -270,8 +341,9 @@ public class CPServiceImpl implements CPService {
                 WorkDay workDay = workDays.stream().filter(w -> Objects.equals(w.getNurseId(), nurse.getId())).findFirst().orElse(null);
                 Date workDate = convertDate(shiftDate, d);
                 List<Nurse> nurses = existsWorKDaysForEachNurse.get(workDate.toString());
+                boolean previousMonthLastTwoDayShift = checkPreviousShifts(lastDayShifts, secondLastDayShifts, nurse, d);
                 boolean checkWorkDay = checkWorkDayByListSize(nurses,workDate,constraint);
-                if (workDay == null || (workDay.getWorkDate().contains(workDate)) || checkWorkDay) {
+                if ((workDay == null || (workDay.getWorkDate().contains(workDate)) || checkWorkDay) && !previousMonthLastTwoDayShift) {
                     if (!isWeekend) {
                         for (int s = 0; s < totalShifts - 1; s++) {
                             totalNursesInShifts.get(s).addTerm(shifts[n][d][s], 1);
@@ -302,15 +374,17 @@ public class CPServiceImpl implements CPService {
 
     private void implementNotWorkingShifts(List<Nurse> nurseList, int[] allNurses, int[] allDays, int[] allShifts,
                                            Literal[][][] shifts, CpModel model, LocalDate shiftDate, List<WorkDay> workDays,
-                                           HashMap<String, List<Nurse>> existsWorKDaysForEachNurse,Constraint constraint) {
+                                           HashMap<String, List<Nurse>> existsWorKDaysForEachNurse,Constraint constraint,
+                                           List<ShiftDto> lastDayShifts,List<ShiftDto> secondLastDayShifts) {
         for (int n : allNurses) {
             Nurse nurse = nurseList.get(n);
             WorkDay workDay = workDays.stream().filter(w -> Objects.equals(w.getNurseId(), nurse.getId())).findFirst().orElse(null);
             for (int d = 0; d < allDays.length; d++) {
                 Date date = convertDate(shiftDate, d);
                 List<Nurse> nurses = existsWorKDaysForEachNurse.get(date.toString());
+                boolean previousMonthLastTwoDayShift = checkPreviousShifts(lastDayShifts, secondLastDayShifts, nurse, d);
                 boolean checkWorkDay = checkWorkDayByListSize(nurses,date,constraint);
-                if (workDay == null || workDay.getWorkDate().contains(date) ||checkWorkDay) {
+                if ((workDay == null || workDay.getWorkDate().contains(date) ||checkWorkDay) && !previousMonthLastTwoDayShift) {
                     for (int s = 0; s < allShifts.length; s++) {
                         if (shifts[n][d][s] != null) {
                             for (int otherS = s + 1; otherS < allShifts.length; otherS++) {

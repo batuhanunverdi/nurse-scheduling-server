@@ -10,6 +10,7 @@ import com.example.nurseschedulingserver.entity.workday.WorkDay;
 import com.example.nurseschedulingserver.enums.RequestStatus;
 import com.example.nurseschedulingserver.enums.Role;
 import com.example.nurseschedulingserver.repository.*;
+import com.example.nurseschedulingserver.service.interfaces.CPService;
 import com.example.nurseschedulingserver.service.interfaces.ConstraintService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
@@ -29,22 +30,23 @@ public class DataInjector implements CommandLineRunner {
     private final ExchangeShiftRequestRepository exchangeShiftRequestRepository;
     private final WorkDayRepository workDayRepository;
     private final ConstraintService constraintService;
+    private final CPService cpService;
 
     @Override
     public void run(String... args) throws Exception {
-//        injectDepartments();
-//        injectNurse();
-//        injectOffDays();
-//        injectWorkDays();
-//        injectConstraints();
-//        injectExchangeShiftRequests();
+        injectDepartments();
+        injectNurse();
+        injectWorkDays();
+        injectConstraints();
+        cpService.executeConstraint();
     }
     public void injectConstraints() throws Exception {
         List<Department> departments = departmentRepository.findAll();
         for (Department department : departments) {
-            constraintService.createConstraint(department.getName(),new ArrayList<>(Arrays.asList(4,2,2)));
+            constraintService.createConstraint(department.getName(), new ArrayList<>(Arrays.asList(3, 2, 2)));
         }
     }
+
     public void injectDepartments() {
         List<String> departments = List.of(
                 "Yara Bakım Birimi",
@@ -64,29 +66,16 @@ public class DataInjector implements CommandLineRunner {
             departmentRepository.save(department);
         }
     }
-    public void injectNurse(){
+
+    public void injectNurse() {
         List<Department> departments = departmentRepository.findAll();
         List<Nurse> nurses = new ArrayList<>();
-        Nurse nurse = new Nurse();
-        nurse.setFirstName("Mert Batuhan");
-        nurse.setLastName("Ünverdi");
-        nurse.setTcKimlikNo("37012561724");
-        nurse.setPhoneNumber("0532 123 45 67");
-        nurse.setDepartmentId(departments.get(1).getId());
-        nurse.setPassword(passwordEncoder.encode("Sanane5885"));
-        nurse.setRole(Role.CHARGE);
-        nurse.setGender("Erkek");
-        nurse.setBirthDate("09.06.1998");
-        nurses.add(nurse);
 
         for (Department department : departments) {
             String departmentId = department.getId();
             String defaultPassword = "Sanane5885";
             Random random = new Random();
-            for (int i = 0; i <12; i++) {
-                if(i==0 && department.getName().equals("Acil Servis")){
-                    continue;
-                }
+            for (int i = 0; i < 12; i++) {
                 long randomNumber = (long) (random.nextDouble() * 1_000_000_000_00L);
                 String tcKimlikNo = String.valueOf(randomNumber);
                 Nurse nurse2 = new Nurse();
@@ -96,15 +85,21 @@ public class DataInjector implements CommandLineRunner {
                 nurse2.setPhoneNumber("0532 123 45 67");
                 nurse2.setDepartmentId(departmentId);
                 nurse2.setPassword(passwordEncoder.encode(defaultPassword));
-                nurse2.setRole(Role.NURSE);
-                nurse2.setGender(i%2==0 ? "Erkek" : "Kadın");
+                if(i==0){
+                    nurse2.setRole(Role.CHARGE);
+                }
+                else {
+                    nurse2.setRole(Role.NURSE);
+                }
+                nurse2.setGender(i % 2 == 0 ? "Erkek" : "Kadın");
                 nurse2.setBirthDate("09.06.1998");
                 nurses.add(nurse2);
             }
         }
         nurseRepository.saveAll(nurses);
     }
-    public void injectOffDays(){
+
+    public void injectOffDays() {
         List<AuthProjection> authProjections = new ArrayList<>();
         AuthProjection nurse = nurseRepository.findNurseByTcKimlikNo("37012561724").orElseThrow();
         authProjections.add(nurse);
@@ -132,17 +127,17 @@ public class DataInjector implements CommandLineRunner {
                 RequestStatus.PENDING
         );
 
-        for (int i = 0; i <15 ; i++) {
+        for (int i = 0; i < 15; i++) {
             OffDay offDay = new OffDay();
             offDay.setDate(dates.get(i));
-            offDay.setNurseId(authProjections.get(i%3).getId());
+            offDay.setNurseId(authProjections.get(i % 3).getId());
             offDay.setStatus(statuses.get(new Random().nextInt(1)));
             offDays.add(offDay);
         }
         offDayRepository.saveAll(offDays);
     }
 
-    public void injectShifts(){
+    public void injectShifts() {
         Calendar calendar = Calendar.getInstance();
         List<Shift> shifts = shiftRepository.findAll();
         Shift shift1 = new Shift();
@@ -189,11 +184,12 @@ public class DataInjector implements CommandLineRunner {
         shiftRepository.saveAll(shifts);
 
     }
-    public void injectExchangeShiftRequests(){
-    List<Shift> shifts = shiftRepository.findAll();
-    if(shifts.size() < 2){
-        return;
-    }
+
+    public void injectExchangeShiftRequests() {
+        List<Shift> shifts = shiftRepository.findAll();
+        if (shifts.size() < 2) {
+            return;
+        }
         ExchangeShiftRequest exchangeShiftRequest = new ExchangeShiftRequest();
         exchangeShiftRequest.setRequesterShiftId(shifts.get(0).getId());
         exchangeShiftRequest.setRequestedShiftId(shifts.get(1).getId());
@@ -206,41 +202,47 @@ public class DataInjector implements CommandLineRunner {
     public void injectWorkDays() {
         List<WorkDay> workDays = new ArrayList<>();
         List<Nurse> nurses = nurseRepository.findAll();
-
-        List<Date> allDaysInJune = new ArrayList<>();
-        Calendar calendar = Calendar.getInstance();
-
-        calendar.set(2024, Calendar.JUNE, 1);
-        int daysInJune = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
-        for (int day = 1; day <= daysInJune; day++) {
-            calendar.set(Calendar.DAY_OF_MONTH, day);
-            allDaysInJune.add(calendar.getTime());
-        }
-
         Random random = new Random();
-        for (Nurse nurse : nurses) {
-            Set<Date> selectedDates = new HashSet<>();
-            while (selectedDates.size() < daysInJune-3) {
-                int randomIndex = random.nextInt(allDaysInJune.size());
-                    selectedDates.add(allDaysInJune.get(randomIndex));
+
+        int[] months = {Calendar.JUNE, Calendar.JULY, Calendar.AUGUST};
+
+        for (int month : months) {
+            List<Date> allDaysInMonth = new ArrayList<>();
+            Calendar calendar = Calendar.getInstance();
+            calendar.set(2024, month, 1);
+            int daysInMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
+
+            for (int day = 1; day <= daysInMonth; day++) {
+                calendar.set(Calendar.DAY_OF_MONTH, day);
+                allDaysInMonth.add(calendar.getTime());
             }
-            WorkDay workDay = new WorkDay();
-            List<Date> datesWithMidnight = new ArrayList<>();
-            for (Date date : selectedDates) {
-                calendar.setTime(date);
-                calendar.set(Calendar.HOUR_OF_DAY, 0);
-                calendar.set(Calendar.MINUTE, 0);
-                calendar.set(Calendar.SECOND, 0);
-                calendar.set(Calendar.MILLISECOND, 0);
-                datesWithMidnight.add(calendar.getTime());
+
+            for (Nurse nurse : nurses) {
+                if(nurse.getRole().equals(Role.NURSE)){
+                    Set<Date> selectedDates = new HashSet<>();
+                    while (selectedDates.size() < daysInMonth - 3) { // Selecting random days except for 3 days
+                        int randomIndex = random.nextInt(allDaysInMonth.size());
+                        selectedDates.add(allDaysInMonth.get(randomIndex));
+                    }
+
+                    List<Date> datesWithMidnight = new ArrayList<>();
+                    for (Date date : selectedDates) {
+                        calendar.setTime(date);
+                        calendar.set(Calendar.HOUR_OF_DAY, 0);
+                        calendar.set(Calendar.MINUTE, 0);
+                        calendar.set(Calendar.SECOND, 0);
+                        calendar.set(Calendar.MILLISECOND, 0);
+                        datesWithMidnight.add(calendar.getTime());
+                    }
+
+                    WorkDay workDay = new WorkDay();
+                    workDay.setWorkDate(datesWithMidnight);
+                    workDay.setNurseId(nurse.getId());
+                    workDays.add(workDay);
+                }
             }
-            workDay.setWorkDate(datesWithMidnight);
-            workDay.setNurseId(nurse.getId());
-            workDays.add(workDay);
         }
 
         workDayRepository.saveAll(workDays);
     }
-
-
 }
