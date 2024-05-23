@@ -174,8 +174,7 @@ public class CPServiceImpl implements CPService {
         return workDayService.findWorkDayByMonthAndYear(date.getMonthValue(),date.getYear(),departmentId);
     }
     private boolean checkWorkDateExists(Date date, String nurseId,List<WorkDay> workDays){
-        boolean hi =  workDays.stream().anyMatch(workDay -> workDay.getWorkDate().contains(date) && workDay.getNurseId().equals(nurseId));
-        return hi;
+        return workDays.stream().anyMatch(workDay -> workDay.getWorkDate().contains(date) && workDay.getNurseId().equals(nurseId));
     }
     private Date convertDate(LocalDate date, int day) {
         return Date.from(date.withDayOfMonth(day + 1).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
