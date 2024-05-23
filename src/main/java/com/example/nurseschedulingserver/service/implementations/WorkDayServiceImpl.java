@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -58,13 +57,8 @@ public class WorkDayServiceImpl implements WorkDayService {
 
 
     @Override
-    public boolean checkWorkDayExistsByDateAndNurseId(Date date,String nurseId) {
-        return workDayRepository.existsAllByWorkDateContainingAndNurseId(date,nurseId);
-    }
-
-    @Override
-    public List<WorkDay> findWorkDayByMonthAndYear(int month, int year) {
-        return workDayRepository.findAllByMonthAndYear(month,year);
+    public List<WorkDay> findWorkDayByMonthAndYear(int month, int year,String departmentId) {
+        return workDayRepository.findAllByMonthAndYearAndDepartmentId(month,year,departmentId);
     }
 
 

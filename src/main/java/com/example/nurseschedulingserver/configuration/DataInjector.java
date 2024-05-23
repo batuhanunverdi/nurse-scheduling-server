@@ -210,7 +210,7 @@ public class DataInjector implements CommandLineRunner {
         List<Date> allDaysInJune = new ArrayList<>();
         Calendar calendar = Calendar.getInstance();
 
-        calendar.set(2024, Calendar.JULY, 1);
+        calendar.set(2024, Calendar.JUNE, 1);
         int daysInJune = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
         for (int day = 1; day <= daysInJune; day++) {
             calendar.set(Calendar.DAY_OF_MONTH, day);
@@ -222,13 +222,8 @@ public class DataInjector implements CommandLineRunner {
             Set<Date> selectedDates = new HashSet<>();
             while (selectedDates.size() < daysInJune-3) {
                 int randomIndex = random.nextInt(allDaysInJune.size());
-                if(!selectedDates.contains(allDaysInJune.get(randomIndex))){
                     selectedDates.add(allDaysInJune.get(randomIndex));
-                }
             }
-//            for (int i = 0; i <daysInJune-4; i++) {
-//                selectedDates.add(allDaysInJune.get(i));
-//            }
             WorkDay workDay = new WorkDay();
             List<Date> datesWithMidnight = new ArrayList<>();
             for (Date date : selectedDates) {
