@@ -1,6 +1,5 @@
 package com.example.nurseschedulingserver.configuration;
 
-import com.example.nurseschedulingserver.dto.auth.AuthProjection;
 import com.example.nurseschedulingserver.entity.department.Department;
 import com.example.nurseschedulingserver.entity.nurse.Nurse;
 import com.example.nurseschedulingserver.entity.offday.OffDay;
@@ -34,11 +33,11 @@ public class DataInjector implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        injectDepartments();
-        injectNurse();
-        injectWorkDays();
-        injectConstraints();
-        cpService.executeConstraint();
+//        injectDepartments();
+//        injectNurse();
+//        injectWorkDays();
+//        injectConstraints();
+//        cpService.executeConstraint();
     }
     public void injectConstraints() throws Exception {
         List<Department> departments = departmentRepository.findAll();
@@ -100,38 +99,31 @@ public class DataInjector implements CommandLineRunner {
     }
 
     public void injectOffDays() {
-        List<AuthProjection> authProjections = new ArrayList<>();
-        AuthProjection nurse = nurseRepository.findNurseByTcKimlikNo("37012561724").orElseThrow();
-        authProjections.add(nurse);
+        List<Nurse> nurses = new ArrayList<>(nurseRepository.findAll().stream().filter(nurse -> nurse.getDepartmentId().equals("8cbb9908-5f44-4aa1-bd94-adf4cf6ce51d")).toList());
+        nurses.removeIf(nurse -> nurse.getRole().equals(Role.CHARGE));
         List<String> dates = new ArrayList<>();
-        dates.add("08.04.2024");
-        dates.add("09.04.2024");
-        dates.add("10.04.2024");
-        dates.add("11.04.2024");
-        dates.add("12.04.2024");
-        dates.add("13.04.2024");
-        dates.add("14.04.2024");
-        dates.add("15.04.2024");
-        dates.add("16.04.2024");
-        dates.add("17.04.2024");
-        dates.add("18.04.2024");
-        dates.add("19.04.2024");
-        dates.add("20.04.2024");
-        dates.add("21.04.2024");
-        dates.add("22.04.2024");
+        dates.add("08.06.2024");
+        dates.add("09.06.2024");
+        dates.add("10.06.2024");
+        dates.add("11.06.2024");
+        dates.add("12.06.2024");
+        dates.add("13.06.2024");
+        dates.add("14.06.2024");
+        dates.add("15.06.2024");
+        dates.add("16.06.2024");
+        dates.add("17.06.2024");
+        dates.add("18.06.2024");
+        dates.add("19.06.2024");
+        dates.add("20.06.2024");
+        dates.add("21.06.2024");
+        dates.add("22.06.2024");
         List<OffDay> offDays = new ArrayList<>();
-
-        List<RequestStatus> statuses = List.of(
-                RequestStatus.ACCEPTED,
-                RequestStatus.REJECTED,
-                RequestStatus.PENDING
-        );
 
         for (int i = 0; i < 15; i++) {
             OffDay offDay = new OffDay();
             offDay.setDate(dates.get(i));
-            offDay.setNurseId(authProjections.get(i % 3).getId());
-            offDay.setStatus(statuses.get(new Random().nextInt(1)));
+            offDay.setNurseId(nurses.get(new Random().nextInt(nurses.size())).getId());
+            offDay.setStatus(RequestStatus.PENDING);
             offDays.add(offDay);
         }
         offDayRepository.saveAll(offDays);

@@ -49,7 +49,7 @@ public interface NurseRepository extends JpaRepository<Nurse, String> {
     @Query(nativeQuery = true,
             value =
                     "SELECT nurses.id as id, nurses.first_name as firstName, nurses.last_name as lastName, departments.name as departmentName, " +
-                            "nurses.tc_kimlik_no as tcKimlikNo,nurses.gender as gender,nurses.birth_date as birthDate " +
+                            "nurses.tc_kimlik_no as tcKimlikNo,nurses.gender as gender,nurses.birth_date as birthDate, nurses.role as role " +
                             "FROM nurses " +
                             "INNER JOIN departments " +
                             "ON nurses.department_id = departments.id WHERE departments.name= ?1")

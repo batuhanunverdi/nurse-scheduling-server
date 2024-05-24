@@ -9,4 +9,5 @@ public interface NurseDto {
     String getTcKimlikNo();
     String getGender();
     String getBirthDate();
+    String getRole();
 }
