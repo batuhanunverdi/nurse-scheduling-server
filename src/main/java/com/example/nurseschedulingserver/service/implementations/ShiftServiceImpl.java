@@ -115,12 +115,10 @@ public class ShiftServiceImpl implements ShiftService {
         String shift2StartDate = sdf.format(shift2.getStartDate());
         String shift2EndDate = sdf.format(shift2.getEndDate());
 
-        // Same day and same duration check
         if (shift1StartDate.equals(shift2StartDate) && shift1Duration == duration) {
             return true;
         }
 
-        // Overlapping dates check
         if (shift1StartDate.equals(shift2StartDate) ||
                 shift1StartDate.equals(shift2EndDate) ||
                 shift1EndDate.equals(shift2EndDate) ||
@@ -128,7 +126,6 @@ public class ShiftServiceImpl implements ShiftService {
             return true;
         }
 
-        // Constraint checks
         if ((duration == 16 || duration == 24) && getPreviousDay(shift1.getStartDate(), 1).equals(shift2.getStartDate())) {
             return true;
         }
