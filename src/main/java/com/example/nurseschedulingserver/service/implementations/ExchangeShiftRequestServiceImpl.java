@@ -26,7 +26,7 @@ public class ExchangeShiftRequestServiceImpl implements ExchangeShiftRequestServ
     @Override
     public List<ExchangeShiftRequestDto> getAllLoggedInUserExchangeShiftRequests() {
         Calendar calendar = Calendar.getInstance();
-        int month = calendar.get(Calendar.MONTH) + 2;
+        int month = calendar.get(Calendar.MONTH) + 1;
         int year = calendar.get(Calendar.YEAR);
         AuthProjection authProjection = nurseService.getLoggedInUser();
         return exchangeShiftRequestRepository.findAllByRequestedShiftId(authProjection.getId(), month, year);
