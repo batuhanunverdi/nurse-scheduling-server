@@ -3,8 +3,10 @@ package com.example.nurseschedulingserver.repository;
 import com.example.nurseschedulingserver.dto.shift.ShiftDto;
 import com.example.nurseschedulingserver.entity.shift.Shift;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -80,4 +82,13 @@ public interface ShiftRepository extends JpaRepository<Shift, String> {
                     "AND EXTRACT(DAY FROM shifts.start_date) = :day"
     )
     List<ShiftDto> findShiftsByDepartmentNameAndDate(String departmentId, int month,int year, int day);
+
+    @Transactional
+    @Modifying
+    @Query(nativeQuery = true,
+            value = "DELETE FROM shifts USING nurses n WHERE shifts.nurse_id = n.id " +
+                    "AND n.department_id = :departmentId " +
+                    "AND EXTRACT(MONTH FROM shifts.start_date) = :month " +
+                    "AND EXTRACT(YEAR FROM shifts.start_date) = :year")
+    void deleteByDepartmentAndMonth(String departmentId, int month, int year);
 }

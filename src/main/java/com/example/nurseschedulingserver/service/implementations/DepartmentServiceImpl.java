@@ -14,7 +14,7 @@ public class DepartmentServiceImpl implements DepartmentService {
     private final DepartmentRepository departmentRepository;
     @Override
     public Department getDepartmentByName(String name) {
-        return departmentRepository.findByName(name).orElse(null);
+        return departmentRepository.findFirstByName(name).orElse(null);
     }
 
     @Override

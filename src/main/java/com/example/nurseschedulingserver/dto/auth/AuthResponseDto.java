@@ -21,6 +21,7 @@ public class AuthResponseDto {
     private String birthdate;
     private String errorMessage;
     private String pictureUrl;
+    private String token;
 
     public AuthResponseDto(String errorMessage) {
         this.errorMessage = errorMessage;

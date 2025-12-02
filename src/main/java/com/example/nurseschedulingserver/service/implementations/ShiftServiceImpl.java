@@ -204,5 +204,10 @@ public class ShiftServiceImpl implements ShiftService {
         return shiftRepository.findShiftsByDepartmentNameAndDate(departmentId,month,year, days);
     }
 
+    @Override
+    public void deleteShiftsByDepartmentAndMonth(String departmentId, int month, int year) {
+        shiftRepository.deleteByDepartmentAndMonth(departmentId, month, year);
+    }
+
 
 }

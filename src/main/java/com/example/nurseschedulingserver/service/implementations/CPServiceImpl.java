@@ -17,10 +17,10 @@ import org.springframework.stereotype.Service;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.Month;
 import java.time.ZoneId;
 import java.time.temporal.ChronoField;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Service
@@ -42,59 +42,67 @@ public class CPServiceImpl implements CPService {
                     .filter(nurse -> nurse.getRole().equals(Role.CHARGE))
                     .findFirst();
             for (int i = 0; i <3 ; i++) {
-                int finalI = i;
-                constraint.ifPresent(value -> createShifts(nurses, value, finalI));
-                createShiftForChargeNurse(chargeNurse.get(),finalI);
+                LocalDate targetMonth = LocalDate.now().plusMonths(i + 1).withDayOfMonth(1);
+                constraint.ifPresent(value -> createShifts(nurses, value, targetMonth, chargeNurse.isPresent()));
+                chargeNurse.ifPresent(nurse -> createShiftForChargeNurse(nurse, targetMonth));
             }
         }
     }
-    private void createShiftForChargeNurse(Nurse nurse,int x){
-        LocalDate currentDate = LocalDate.now().plusMonths(x);
-        LocalDate nextDate = currentDate.plusMonths(1);
-        int nextMonthDays = nextDate.lengthOfMonth();
+    private void createShiftForChargeNurse(Nurse nurse,LocalDate targetMonth){
+        int nextMonthDays = targetMonth.lengthOfMonth();
         List<Shift> shifts = new ArrayList<>();
         for (int i = 0; i < nextMonthDays; i++) {
-         Date date = convertDate(nextDate, i);
-         LocalDate localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-         if(!isWeekend(localDate)){
-             Shift shift = new Shift();
-             shift.setNurseId(nurse.getId());
-             Calendar calendar = Calendar.getInstance();
-             LocalDate innerDate = LocalDate.now();
-             calendar.set(innerDate.getYear(), innerDate.getMonthValue()+x, i + 1, 8, 0, 0);
-             shift.setStartDate(calendar.getTime());
-             calendar.set(innerDate.getYear(), innerDate.getMonthValue()+x, i + 1, 16, 0, 0);
-             shift.setEndDate(calendar.getTime());
-             shifts.add(shift);
-         }
+            Date date = convertDate(targetMonth, i);
+            LocalDate localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            if(!isWeekend(localDate)){
+                Shift shift = new Shift();
+                shift.setNurseId(nurse.getId());
+                Calendar calendar = Calendar.getInstance();
+                calendar.clear();
+                calendar.set(targetMonth.getYear(), targetMonth.getMonthValue()-1, i + 1, 8, 0, 0);
+                shift.setStartDate(calendar.getTime());
+                calendar.set(targetMonth.getYear(), targetMonth.getMonthValue()-1, i + 1, 16, 0, 0);
+                shift.setEndDate(calendar.getTime());
+                shifts.add(shift);
+            }
         }
         shiftService.saveAll(shifts);
 
     }
 
-    private void createShifts(List<Nurse> nurseList, Constraint constraint,int x) {
-        nurseList.removeIf(nurse -> nurse.getRole().equals(Role.CHARGE));
+    private void createShifts(List<Nurse> nurseList, Constraint constraint,LocalDate targetMonth, boolean hasChargeNurse) {
+        List<Nurse> schedulableNurses = nurseList.stream()
+                .filter(nurse -> !nurse.getRole().equals(Role.CHARGE))
+                .collect(Collectors.toList());
         long startTime = System.currentTimeMillis();
         Loader.loadNativeLibraries();
-        LocalDate currentDate = LocalDate.now().plusMonths(x);
-        int lastDay = currentDate.lengthOfMonth();
-        int secondLastDay = currentDate.lengthOfMonth()-1;
-        List<ShiftDto> lastDayShifts = shiftService.getShiftsByDepartmentAndDate(constraint.getDepartmentId(),currentDate.getMonthValue(),currentDate.getYear(),lastDay);
-        List<ShiftDto> secondLastDayShifts = shiftService.getShiftsByDepartmentAndDate(constraint.getDepartmentId(),currentDate.getMonthValue(),currentDate.getYear(),secondLastDay);
-        LocalDate nextDate = currentDate.plusMonths(1);
-        int nextMonthDays = nextDate.lengthOfMonth();
-        final int numNurses = nurseList.size();
+        LocalDate previousMonth = targetMonth.minusMonths(1);
+        int lastDay = previousMonth.lengthOfMonth();
+        int secondLastDay = Math.max(1, previousMonth.lengthOfMonth()-1);
+        List<ShiftDto> lastDayShifts = shiftService.getShiftsByDepartmentAndDate(constraint.getDepartmentId(),previousMonth.getMonthValue(),previousMonth.getYear(),lastDay);
+        List<ShiftDto> secondLastDayShifts = shiftService.getShiftsByDepartmentAndDate(constraint.getDepartmentId(),previousMonth.getMonthValue(),previousMonth.getYear(),secondLastDay);
+        int nextMonthDays = targetMonth.lengthOfMonth();
+        final int numNurses = schedulableNurses.size();
+        if (numNurses == 0) {
+            return;
+        }
         final int[] allNurses = IntStream.range(0, numNurses).toArray();
         final int[] allDays = IntStream.range(0, nextMonthDays).toArray();
         final int[] allShifts = IntStream.range(0, 3).toArray();
-        final int solutionLimit = 1;
-        List<WorkDay> workDays = getWorkDayByMonthAndDateAndDepartment(nextDate,constraint.getDepartmentId());
+
+        shiftService.deleteShiftsByDepartmentAndMonth(constraint.getDepartmentId(), targetMonth.getMonthValue(), targetMonth.getYear());
+
+        int minDayShift = constraint.getMinimumNursesForEachShift().get(0);
+        int minNightShift = constraint.getMinimumNursesForEachShift().get(1);
+        int minFullShift = constraint.getMinimumNursesForEachShift().get(2);
+
+        List<WorkDay> workDays = getWorkDayByMonthAndDateAndDepartment(targetMonth,constraint.getDepartmentId());
         HashMap<String, List<Nurse>> workDaysForNurses = new HashMap<>();
         for (int i = 0; i < nextMonthDays; i++) {
-            Date date = convertDate(nextDate, i);
+            Date date = convertDate(targetMonth, i);
             String dateString = date.toString();
             workDaysForNurses.put(dateString, new ArrayList<>());
-            for (Nurse nurse : nurseList) {
+            for (Nurse nurse : schedulableNurses) {
                 boolean exists = checkWorkDateExists(date, nurse.getId(),workDays);
                 if (exists) {
                     workDaysForNurses.get(dateString).add(nurse);
@@ -103,91 +111,50 @@ public class CPServiceImpl implements CPService {
         }
 
         CpModel model = new CpModel();
-        Literal[][][] shifts = createShiftVariables(nurseList,allNurses, allDays, allShifts, nextDate,model,workDays,workDaysForNurses,constraint,lastDayShifts,secondLastDayShifts);
-        implementConsecutiveShifts(nurseList,allNurses,allDays,shifts,model,nextDate,constraint,workDays,workDaysForNurses,lastDayShifts,secondLastDayShifts);
-        implementMinimumWorkingHours(allNurses,allDays,allShifts,shifts,nurseList,nextDate,model,workDays,workDaysForNurses,constraint,lastDayShifts,secondLastDayShifts);
-        implementNotWorkingShifts(nurseList,allNurses,allDays,allShifts,shifts,model,nextDate,workDays,workDaysForNurses,constraint,lastDayShifts,secondLastDayShifts);
+        Literal[][][] shifts = createShiftVariables(schedulableNurses,allNurses, allDays, allShifts, targetMonth,model,workDays,workDaysForNurses,minDayShift,minNightShift,minFullShift,hasChargeNurse,lastDayShifts,secondLastDayShifts);
+        applyCoverageConstraints(schedulableNurses,allNurses,allDays,shifts,model,targetMonth,minDayShift,minNightShift,minFullShift,hasChargeNurse,workDays,workDaysForNurses,lastDayShifts,secondLastDayShifts);
+        applyRestAndExclusivityConstraints(schedulableNurses,allNurses,allDays,allShifts,shifts,model,targetMonth,workDays,workDaysForNurses,minDayShift,minNightShift,minFullShift,hasChargeNurse,lastDayShifts,secondLastDayShifts);
+        List<IntVar> deviations = buildFairnessObjective(schedulableNurses, allNurses, allDays, allShifts, shifts, model, targetMonth, workDays, workDaysForNurses, minDayShift, minNightShift, minFullShift, hasChargeNurse, lastDayShifts, secondLastDayShifts);
+        addObjective(model, deviations, targetMonth.lengthOfMonth());
 
         CpSolver solver = new CpSolver();
-        solver.getParameters().setLinearizationLevel(0);
-        solver.getParameters().setRandomizeSearch(true);
-        solver.getParameters().setEnumerateAllSolutions(true);
-        solver.getParameters().setRandomSeed((int) System.currentTimeMillis());
-        solver.getParameters().setRandomBranchesRatio(12.0);
+        solver.getParameters().setMaxTimeInSeconds(30.0);
 
-        class VarArraySolutionPrinterWithLimit extends CpSolverSolutionCallback {
-            private final List<Nurse> nurseList;
-
-            public VarArraySolutionPrinterWithLimit(List<Nurse> nurseList,
-                                                    int[] allNurses, int[] allDays, int[] allShifts, Literal[][][] shifts, int limit) {
-                this.nurseList = nurseList;
-                solutionCount = 0;
-                this.allNurses = allNurses;
-                this.allDays = allDays;
-                this.allShifts = allShifts;
-                this.shifts = shifts;
-                solutionLimit = limit;
-            }
-
-            @Override
-            public void onSolutionCallback() {
-                List<Shift> shiftList = new ArrayList<>();
-                for (int d : allDays) {
-                    System.out.printf("Day %d:%n", d + 1);
-                    for (int s : allShifts) {
-                        System.out.printf("  Shift %d:%n", s);
-                        for (int n : allNurses) {
-                            Nurse nurse = nurseList.get(n);
-                            if (shifts[n][d][s] != null && booleanValue(shifts[n][d][s])) {
-                                int shiftDuration = shiftDuration(s);
-                                int startHour = calculateStartHour(s);
-                                int endHour = (startHour + shiftDuration) % 24;
-                                System.out.printf("    Nurse %d (%s): %02d:00 - %02d:00%n", n, nurse.getFirstName(), startHour, endHour);
-                                Shift shift = new Shift();
-                                shift.setNurseId(nurse.getId());
-                                Calendar calendar = Calendar.getInstance();
-                                LocalDate date = LocalDate.now();
-                                calendar.set(date.getYear(), date.getMonthValue()+x, d + 1, startHour, 0, 0);
-                                shift.setStartDate(calendar.getTime());
-                                if (shiftDuration == 8) {
-                                    calendar.set(date.getYear(), date.getMonthValue()+x, d + 1, endHour, 0, 0);
-                                } else {
-                                    calendar.set(date.getYear(), date.getMonthValue()+x, d + 2, endHour, 0, 0);
-                                }
-                                shift.setEndDate(calendar.getTime());
-                                shiftList.add(shift);
-                            }
-                        }
-                    }
-                }
-                solutionCount++;
-                if (solutionCount >= solutionLimit) {
-                    System.out.printf("Stop search after %d solutions%n", solutionLimit);
-                    stopSearch();
-                }
-                shiftService.saveAll(shiftList);
-            }
-
-            public int getSolutionCount() {
-                return solutionCount;
-            }
-
-            private int solutionCount;
-            private final int[] allNurses;
-            private final int[] allDays;
-            private final int[] allShifts;
-            private final Literal[][][] shifts;
-            private final int solutionLimit;
-        }
-
-        VarArraySolutionPrinterWithLimit cb = new VarArraySolutionPrinterWithLimit(nurseList, allNurses, allDays, allShifts, shifts, solutionLimit);
-
-        System.out.println("Solving model");
-        CpSolverStatus status = solver.solve(model, cb);
+        System.out.println("Solving model for " + targetMonth);
+        CpSolverStatus status = solver.solve(model);
         long endTime = System.currentTimeMillis();
         System.out.println("Execution time: " + (endTime - startTime) + " ms");
         System.out.println("Status: " + status);
-        System.out.println(cb.getSolutionCount() + " solutions found.");
+        if (status != CpSolverStatus.OPTIMAL && status != CpSolverStatus.FEASIBLE) {
+            return;
+        }
+        List<Shift> shiftList = new ArrayList<>();
+        for (int d : allDays) {
+            for (int s : allShifts) {
+                for (int n : allNurses) {
+                    if (shifts[n][d][s] != null && solver.booleanValue(shifts[n][d][s])) {
+                        Nurse nurse = schedulableNurses.get(n);
+                        int shiftDuration = shiftDuration(s);
+                        int startHour = calculateStartHour(s);
+                        int endHour = (startHour + shiftDuration) % 24;
+                        Shift shift = new Shift();
+                        shift.setNurseId(nurse.getId());
+                        Calendar calendar = Calendar.getInstance();
+                        calendar.clear();
+                        calendar.set(targetMonth.getYear(), targetMonth.getMonthValue()-1, d + 1, startHour, 0, 0);
+                        shift.setStartDate(calendar.getTime());
+                        if (shiftDuration == 8) {
+                            calendar.set(targetMonth.getYear(), targetMonth.getMonthValue()-1, d + 1, endHour, 0, 0);
+                        } else {
+                            calendar.set(targetMonth.getYear(), targetMonth.getMonthValue()-1, d + 2, endHour, 0, 0);
+                        }
+                        shift.setEndDate(calendar.getTime());
+                        shiftList.add(shift);
+                    }
+                }
+            }
+        }
+        shiftService.saveAll(shiftList);
 
         System.out.println("Statistics");
         System.out.printf("  conflicts: %d%n", solver.numConflicts());
@@ -218,28 +185,17 @@ public class CPServiceImpl implements CPService {
         return Date.from(date.withDayOfMonth(day + 1).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
     }
 
-    private boolean checkWorkDayByListSize(List<Nurse> nurses,Date date,Constraint constraint){
+    private boolean checkWorkDayByListSize(List<Nurse> nurses,Date date,int dayShiftNeed,int nightShiftNeed,int fullShiftNeed,boolean hasChargeNurse){
         if(nurses != null){
             if(isWeekend(date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate())){
-                return nurses.size() < constraint.getMinimumNursesForEachShift().get(2);
+                return nurses.size() < fullShiftNeed;
             }
             else{
-                return nurses.size() < constraint.getMinimumNursesForEachShift().get(0)+constraint.getMinimumNursesForEachShift().get(1);
+                int effectiveDayNeed = hasChargeNurse ? Math.max(0, dayShiftNeed - 1) : dayShiftNeed;
+                return nurses.size() < effectiveDayNeed+nightShiftNeed;
             }
         }
         return true;
-    }
-    private int getMinimumWorkingHours(int year, Month month){
-        int count = 0;
-        LocalDate startDate = LocalDate.of(year,month,1);
-        LocalDate endDate = startDate.plusMonths(1);
-        while(startDate.isBefore(endDate)){
-            if(!isWeekend(startDate)){
-                count+=8;
-            }
-            startDate = startDate.plusDays(1);
-        }
-        return count;
     }
     private boolean checkPreviousMonthLastDay(List<ShiftDto> shiftDtos, Nurse nurse) {
         return shiftDtos.stream().anyMatch(shiftDto ->
@@ -260,7 +216,8 @@ public class CPServiceImpl implements CPService {
     private Literal[][][] createShiftVariables(List<Nurse> nurseList,int[] allNurses, int[] allDays, int[] allShifts,
                                                LocalDate shiftDate,CpModel model,List<WorkDay> workDays,
                                                HashMap<String, List<Nurse>> existsWorKDaysForEachNurse,
-                                               Constraint constraint,List<ShiftDto> lastDayShifts,List<ShiftDto> secondLastDayShifts) {
+                                               int dayShiftNeed,int nightShiftNeed,int fullShiftNeed,boolean hasChargeNurse,
+                                               List<ShiftDto> lastDayShifts,List<ShiftDto> secondLastDayShifts) {
         Literal[][][] shifts = new Literal[allNurses.length][allDays.length][allShifts.length];
         for (int n : allNurses) {
             Nurse nurse = nurseList.get(n);
@@ -269,7 +226,7 @@ public class CPServiceImpl implements CPService {
                 boolean previousMonthLastTwoDayShift = checkPreviousShifts(lastDayShifts, secondLastDayShifts, nurse, d);
                 Date date = convertDate(shiftDate, d);
                 List<Nurse> nurses = existsWorKDaysForEachNurse.get(date.toString());
-                boolean checkWorkDay = checkWorkDayByListSize(nurses,date,constraint);
+                boolean checkWorkDay = checkWorkDayByListSize(nurses,date,dayShiftNeed,nightShiftNeed,fullShiftNeed,hasChargeNurse);
                 for (int s : allShifts) {
                     if ((workDay == null || workDay.getWorkDate().contains(date) || checkWorkDay ) && !previousMonthLastTwoDayShift) {
                         shifts[n][d][s] = model.newBoolVar("shifts_n" + n + "d" + d + "s" + s);
@@ -294,37 +251,11 @@ public class CPServiceImpl implements CPService {
         return previousMonthLastTwoDayShift;
     }
 
-    private void implementMinimumWorkingHours(int[] allNurses, int[] allDays, int[] allShifts,
-                                              Literal[][][] shifts, List<Nurse> nurseList,
-                                              LocalDate shiftDate, CpModel model, List<WorkDay> workDays,
-                                              HashMap<String, List<Nurse>> existsWorKDaysForEachNurse,
-                                              Constraint constraint,List<ShiftDto> lastDayShifts,List<ShiftDto> secondLastDayShifts ) {
-        int minimumWorkingHours = getMinimumWorkingHours(shiftDate.getYear(),shiftDate.getMonth());
-        for (int n : allNurses) {
-            LinearExprBuilder totalHoursWorked = LinearExpr.newBuilder();
-            Nurse nurse = nurseList.get(n);
-            WorkDay workDay = workDays.stream().filter(w -> Objects.equals(w.getNurseId(), nurse.getId())).findFirst().orElse(null);
-            for (int d : allDays) {
-                Date date = convertDate(shiftDate, d);
-                List<Nurse> nurses = existsWorKDaysForEachNurse.get(date.toString());
-                boolean previousMonthLastTwoDayShift = checkPreviousShifts(lastDayShifts, secondLastDayShifts, nurse, d);
-                boolean checkWorkDay = checkWorkDayByListSize(nurses,date,constraint);
-                for (int s : allShifts) {
-                    if ((workDay == null || workDay.getWorkDate().contains(date) || checkWorkDay ) && !previousMonthLastTwoDayShift) {
-                        totalHoursWorked.addTerm(shifts[n][d][s], shiftDuration(s));
-                    }
-                }
-            }
-            model.addGreaterOrEqual(totalHoursWorked.build(), minimumWorkingHours);
-        }
-    }
-
-    private void implementConsecutiveShifts(List<Nurse> nurseList, int[] allNurses, int[] allDays,
-                                            Literal[][][] shifts, CpModel model, LocalDate shiftDate, Constraint constraint,
+    private void applyCoverageConstraints(List<Nurse> nurseList, int[] allNurses, int[] allDays,
+                                            Literal[][][] shifts, CpModel model, LocalDate shiftDate,
+                                            int dayShiftNeed,int nightShiftNeed,int fullShiftNeed,boolean hasChargeNurse,
                                             List<WorkDay> workDays, HashMap<String, List<Nurse>> existsWorKDaysForEachNurse,
                                             List<ShiftDto> lastDayShifts,List<ShiftDto> secondLastDayShifts) {
-        List<Integer> minimumNursesNeeded = constraint.getMinimumNursesForEachShift();
-        minimumNursesNeeded.set(0,minimumNursesNeeded.get(0)-1);
         int totalShifts = 3;
 
         for (int d : allDays) {
@@ -342,39 +273,48 @@ public class CPServiceImpl implements CPService {
                 Date workDate = convertDate(shiftDate, d);
                 List<Nurse> nurses = existsWorKDaysForEachNurse.get(workDate.toString());
                 boolean previousMonthLastTwoDayShift = checkPreviousShifts(lastDayShifts, secondLastDayShifts, nurse, d);
-                boolean checkWorkDay = checkWorkDayByListSize(nurses,workDate,constraint);
+                boolean checkWorkDay = checkWorkDayByListSize(nurses,workDate,dayShiftNeed,nightShiftNeed,fullShiftNeed,hasChargeNurse);
                 if ((workDay == null || (workDay.getWorkDate().contains(workDate)) || checkWorkDay) && !previousMonthLastTwoDayShift) {
                     if (!isWeekend) {
                         for (int s = 0; s < totalShifts - 1; s++) {
-                            totalNursesInShifts.get(s).addTerm(shifts[n][d][s], 1);
+                            if (shifts[n][d][s] != null) {
+                                totalNursesInShifts.get(s).addTerm(shifts[n][d][s], 1);
+                            }
                         }
-                        model.addEquality(shifts[n][d][totalShifts - 1], 0);
+                        if (shifts[n][d][totalShifts - 1] != null) {
+                            model.addEquality(shifts[n][d][totalShifts - 1], 0);
+                        }
                     } else {
-                        totalNursesInShifts.get(totalShifts - 1).addTerm(shifts[n][d][totalShifts - 1], 1);
+                        if (shifts[n][d][totalShifts - 1] != null) {
+                            totalNursesInShifts.get(totalShifts - 1).addTerm(shifts[n][d][totalShifts - 1], 1);
+                        }
                         for (int s = 0; s < totalShifts - 1; s++) {
-                            model.addEquality(shifts[n][d][s], 0);
+                            if (shifts[n][d][s] != null) {
+                                model.addEquality(shifts[n][d][s], 0);
+                            }
                         }
                     }
                 }
             }
 
             if (!isWeekend) {
+                int effectiveDayNeed = hasChargeNurse ? Math.max(0, dayShiftNeed - 1) : dayShiftNeed;
                 for (int s = 0; s < totalShifts - 1; s++) {
                     if(s == 0) {
-                        model.addGreaterOrEqual(totalNursesInShifts.get(s).build(), minimumNursesNeeded.get(s));
+                        model.addEquality(totalNursesInShifts.get(s).build(), effectiveDayNeed);
                     }else {
-                        model.addEquality(totalNursesInShifts.get(s).build(), minimumNursesNeeded.get(s));
+                        model.addEquality(totalNursesInShifts.get(s).build(), nightShiftNeed);
                     }
                 }
             } else {
-                model.addEquality(totalNursesInShifts.get(totalShifts - 1).build(), minimumNursesNeeded.get(totalShifts - 1));
+                model.addEquality(totalNursesInShifts.get(totalShifts - 1).build(), fullShiftNeed);
             }
         }
     }
 
-    private void implementNotWorkingShifts(List<Nurse> nurseList, int[] allNurses, int[] allDays, int[] allShifts,
+    private void applyRestAndExclusivityConstraints(List<Nurse> nurseList, int[] allNurses, int[] allDays, int[] allShifts,
                                            Literal[][][] shifts, CpModel model, LocalDate shiftDate, List<WorkDay> workDays,
-                                           HashMap<String, List<Nurse>> existsWorKDaysForEachNurse,Constraint constraint,
+                                           HashMap<String, List<Nurse>> existsWorKDaysForEachNurse,int dayShiftNeed,int nightShiftNeed,int fullShiftNeed,boolean hasChargeNurse,
                                            List<ShiftDto> lastDayShifts,List<ShiftDto> secondLastDayShifts) {
         for (int n : allNurses) {
             Nurse nurse = nurseList.get(n);
@@ -383,7 +323,7 @@ public class CPServiceImpl implements CPService {
                 Date date = convertDate(shiftDate, d);
                 List<Nurse> nurses = existsWorKDaysForEachNurse.get(date.toString());
                 boolean previousMonthLastTwoDayShift = checkPreviousShifts(lastDayShifts, secondLastDayShifts, nurse, d);
-                boolean checkWorkDay = checkWorkDayByListSize(nurses,date,constraint);
+                boolean checkWorkDay = checkWorkDayByListSize(nurses,date,dayShiftNeed,nightShiftNeed,fullShiftNeed,hasChargeNurse);
                 if ((workDay == null || workDay.getWorkDate().contains(date) ||checkWorkDay) && !previousMonthLastTwoDayShift) {
                     for (int s = 0; s < allShifts.length; s++) {
                         if (shifts[n][d][s] != null) {
@@ -417,5 +357,73 @@ public class CPServiceImpl implements CPService {
                 }
             }
         }
+    }
+
+    private List<IntVar> buildFairnessObjective(List<Nurse> nurseList, int[] allNurses, int[] allDays, int[] allShifts,
+                                                Literal[][][] shifts, CpModel model, LocalDate shiftDate, List<WorkDay> workDays,
+                                                HashMap<String, List<Nurse>> existsWorKDaysForEachNurse,int dayShiftNeed,int nightShiftNeed,int fullShiftNeed,boolean hasChargeNurse,
+                                                List<ShiftDto> lastDayShifts,List<ShiftDto> secondLastDayShifts){
+        List<IntVar> deviations = new ArrayList<>();
+        int maxHours = shiftDate.lengthOfMonth() * 24;
+        int targetHours = computeTargetHours(shiftDate, dayShiftNeed, nightShiftNeed, fullShiftNeed, hasChargeNurse, nurseList.size());
+        for (int n : allNurses) {
+            LinearExprBuilder totalHoursWorked = LinearExpr.newBuilder();
+            Nurse nurse = nurseList.get(n);
+            WorkDay workDay = workDays.stream().filter(w -> Objects.equals(w.getNurseId(), nurse.getId())).findFirst().orElse(null);
+            for (int d : allDays) {
+                Date date = convertDate(shiftDate, d);
+                List<Nurse> nurses = existsWorKDaysForEachNurse.get(date.toString());
+                boolean previousMonthLastTwoDayShift = checkPreviousShifts(lastDayShifts, secondLastDayShifts, nurse, d);
+                boolean checkWorkDay = checkWorkDayByListSize(nurses,date,dayShiftNeed,nightShiftNeed,fullShiftNeed,hasChargeNurse);
+                for (int s : allShifts) {
+                    if ((workDay == null || workDay.getWorkDate().contains(date) || checkWorkDay ) && !previousMonthLastTwoDayShift && shifts[n][d][s] != null) {
+                        totalHoursWorked.addTerm(shifts[n][d][s], shiftDuration(s));
+                    }
+                }
+            }
+            IntVar totalHoursVar = model.newIntVar(0, maxHours, "totalHours_n" + n);
+            model.addEquality(totalHoursVar, totalHoursWorked.build());
+            IntVar deviation = model.newIntVar(0, maxHours, "deviation_n" + n);
+            LinearExprBuilder deviationExpr = LinearExpr.newBuilder();
+            deviationExpr.add(totalHoursVar);
+            deviationExpr.add(-targetHours);
+            model.addAbsEquality(deviation, deviationExpr);
+            deviations.add(deviation);
+        }
+        return deviations;
+    }
+
+    private void addObjective(CpModel model, List<IntVar> deviations, int daysInMonth){
+        if (deviations.isEmpty()) {
+            return;
+        }
+        int maxHours = daysInMonth * 24;
+        IntVar maxDeviation = model.newIntVar(0, maxHours, "maxDeviation");
+        for (IntVar deviation : deviations) {
+            model.addLessOrEqual(deviation, maxDeviation);
+        }
+        LinearExprBuilder objective = LinearExpr.newBuilder();
+        deviations.forEach(objective::add);
+        objective.addTerm(maxDeviation, 100);
+        model.minimize(objective);
+    }
+
+    private int computeTargetHours(LocalDate targetMonth,int dayShiftNeed,int nightShiftNeed,int fullShiftNeed,boolean hasChargeNurse,int nurseCount){
+        if (nurseCount == 0) {
+            return 0;
+        }
+        LocalDate cursor = targetMonth.withDayOfMonth(1);
+        LocalDate end = cursor.plusMonths(1);
+        int total = 0;
+        while(cursor.isBefore(end)){
+            if(isWeekend(cursor)){
+                total += fullShiftNeed * 24;
+            } else {
+                int effectiveDayNeed = hasChargeNurse ? Math.max(0, dayShiftNeed - 1) : dayShiftNeed;
+                total += effectiveDayNeed * 8 + nightShiftNeed * 16;
+            }
+            cursor = cursor.plusDays(1);
+        }
+        return (int) Math.round((double) total / nurseCount);
     }
 }

@@ -28,4 +28,6 @@ public interface ShiftService {
 
     List<ShiftDto> getAvailableShiftsByShiftId(String shiftId,String nurseId, String month, String year);
     List<ShiftDto> getShiftsByDepartmentAndDate(String departmentName,int month,int year ,int days);
+
+    void deleteShiftsByDepartmentAndMonth(String departmentId, int month, int year);
 }

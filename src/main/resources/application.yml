@@ -8,6 +8,9 @@ spring:
   datasource:
     type: org.springframework.jdbc.datasource.DriverManagerDataSource
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://pg-20566c82-mbatuhanunverdi-a6e5.e.aivencloud.com:10856/defaultdb
-    username: ****
-    password: ****
+    url: jdbc:postgresql://localhost:5432/mydb
+    username: myuser
+    password: password
+jwt:
+  secret: VGhpcy1pcy1hLWxvbmc0MDhtZXItc2VjcmV0LWtleS1jaGFuZ2UtaXQtaW4tcHJvZA==
+  expiration: 86400000
